@@ -14,7 +14,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
 use Drupal\user\UserDataInterface;
 use Drupal\user\UserInterface;
-use Egulias\EmailValidator\EmailValidatorInterface;
+use Drupal\Component\Utility\EmailValidatorInterface;
 
 /**
  * Main service of the OpenID Connect module.
