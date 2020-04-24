@@ -68,7 +68,7 @@ class OpenIdConnectSessionTest extends UnitTestCase {
   }
 
   /**
-   * Test the save destination method
+   * Test the save destination method.
    */
   public function testSaveDestination(): void {
     // Get the expected session array.
