@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog][].
 ## [Unreleased]
 ### Added
 - Added unit tests for the OpenIdConnectSession class.
+- Added unit tests for the OpenIdConnectClaims class.
 ### Changed
 
 ### Deprecated
