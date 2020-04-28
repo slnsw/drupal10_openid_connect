@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog][].
 ### Added
 - Added unit tests for the OpenIdConnectSession class.
 - Added unit tests for the OpenIdConnectClaims class.
+- Added unit tests for the OpenIDConnectStateToken class.
 ### Changed
 
 ### Deprecated
