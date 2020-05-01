@@ -6,9 +6,10 @@ The format is based on [Keep a Changelog][].
 [Keep a Changelog]: http://keepachangelog.com/
 ## [Unreleased]
 ### Added
-- Added unit tests for the OpenIdConnectSession class.
-- Added unit tests for the OpenIdConnectClaims class.
+- Added unit tests for the OpenIDConnectSession class.
+- Added unit tests for the OpenIDConnectClaims class.
 - Added unit tests for the OpenIDConnectStateToken class.
+- Added unit tests for the OpenIDConnectAuthmap class.
 ### Changed
 
 ### Deprecated
