@@ -32,7 +32,9 @@ class OpenIDConnectTest extends UnitTestCase {
   protected $logger;
   protected $openIdConnect;
 
-
+  /**
+   * {@inheritDoc}
+   */
   protected function setUp() {
     parent::setUp();
 
@@ -83,6 +85,9 @@ class OpenIDConnectTest extends UnitTestCase {
     );
   }
 
+  /**
+   * Test for the userPropertiesIgnore method.
+   */
   public function testUserPropertiesIgnore(): void {
     $defaultPropertiesIgnore = [
       'uid',
@@ -124,5 +129,55 @@ class OpenIDConnectTest extends UnitTestCase {
     $this->assertArrayEquals($expectedResults, $actualPropertiesIgnored);
   }
 
+  /**
+   * Test the extractSub method.
+   *
+   * @param array $userData
+   *   The user data as returned from
+   *   OpenIDConnectClientInterface::decodeIdToken().
+   * @param array $userInfo
+   *   The user claims as returned from
+   *   OpenIDConnectClientInterface::retrieveUserInfo().
+   * @param $expected
+   *   The expected result from the test.
+   *
+   * @dataProvider  dataProviderForExtractSub
+   */
+  public function testExtractSub(array $userData, array $userInfo, $expected): void {
+    $actual = $this->openIdConnect->extractSub($userData, $userInfo);
+    $this->assertEquals($expected, $actual);
+  }
+
+  /**
+   * Data provider for the testExtractSub method.
+   *
+   * @return array|array[]
+   *   The array of tests for the method.
+   */
+  public function dataProviderForExtractSub(): array {
+    $randomSub = $this->randomMachineName();
+    return [
+      [
+        [],
+        [],
+        FALSE,
+      ],
+      [
+        ['sub' => $randomSub],
+        [],
+        $randomSub,
+      ],
+      [
+        [],
+        ['sub' => $randomSub],
+        $randomSub,
+      ],
+      [
+        ['sub' => $this->randomMachineName()],
+        ['sub' => $randomSub],
+        FALSE,
+      ],
+    ];
+  }
 
 }
