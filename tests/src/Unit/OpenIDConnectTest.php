@@ -20,16 +20,81 @@ use Drupal\openid_connect\OpenIDConnect;
  */
 class OpenIDConnectTest extends UnitTestCase {
 
+  /**
+   * Mock of the config factory.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
   protected $configFactory;
+
+  /**
+   * Mock of the OpenIDConnectAuthMap service.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
   protected $authMap;
+
+  /**
+   * Mock of the entity_type.manager service.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
   protected $entityTypeManager;
+
+  /**
+   * Mock of the entity field manager service.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
   protected $entityFieldManager;
+
+  /**
+   * Mock of the account_proxy service.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
   protected $currentUser;
+
+  /**
+   * Mock of the user data interface.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
   protected $userData;
+
+  /**
+   * Mock of the email validator.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
   protected $emailValidator;
+
+  /**
+   * Mock of the messenger service.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
   protected $messenger;
+
+  /**
+   * Mock of the module handler service.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
   protected $moduleHandler;
+
+  /**
+   * Mock of the logger interface.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
   protected $logger;
+
+  /**
+   * The OpenIDConnect class being tested.
+   *
+   * @var \Drupal\openid_connect\OpenIDConnect
+   */
   protected $openIdConnect;
 
   /**
@@ -138,12 +203,16 @@ class OpenIDConnectTest extends UnitTestCase {
    * @param array $userInfo
    *   The user claims as returned from
    *   OpenIDConnectClientInterface::retrieveUserInfo().
-   * @param $expected
+   * @param bool|string $expected
    *   The expected result from the test.
    *
-   * @dataProvider  dataProviderForExtractSub
+   * @dataProvider dataProviderForExtractSub
    */
-  public function testExtractSub(array $userData, array $userInfo, $expected): void {
+  public function testExtractSub(
+    array $userData,
+    array $userInfo,
+    $expected
+  ): void {
     $actual = $this->openIdConnect->extractSub($userData, $userInfo);
     $this->assertEquals($expected, $actual);
   }
@@ -176,6 +245,98 @@ class OpenIDConnectTest extends UnitTestCase {
         ['sub' => $this->randomMachineName()],
         ['sub' => $randomSub],
         FALSE,
+      ],
+    ];
+  }
+
+  /**
+   * Test for the hasSetPassword method.
+   *
+   * @param \Drupal\Core\Session\AccountProxyInterface|null $account
+   *   The account to test or null if none provided.
+   * @param bool $hasPermission
+   *   Whether the account should have the correct permission
+   *   to change their own password.
+   * @param array $connectedAccounts
+   *   The connected accounts array from the authMap method.
+   * @param bool $expectedResult
+   *   The result expected.
+   *
+   * @dataProvider dataProviderForHasSetPasswordAccess
+   */
+  public function testHasSetPasswordAccess(
+    ?AccountProxyInterface $account,
+    bool $hasPermission,
+    array $connectedAccounts,
+    bool $expectedResult
+  ): void {
+    if (empty($account)) {
+      $this->currentUser->expects($this->once())
+        ->method('hasPermission')
+        ->with('openid connect set own password')
+        ->willReturn($hasPermission);
+
+      if (!$hasPermission) {
+        $this->authMap->expects($this->once())
+          ->method('getConnectedAccounts')
+          ->with($this->currentUser)
+          ->willReturn($connectedAccounts);
+      }
+    }
+    else {
+      $account->expects($this->once())
+        ->method('hasPermission')
+        ->with('openid connect set own password')
+        ->willReturn($hasPermission);
+
+      if (!$hasPermission) {
+        $this->authMap->expects($this->once())
+          ->method('getConnectedAccounts')
+          ->with($account)
+          ->willReturn($connectedAccounts);
+      }
+    }
+
+    $actualResult = $this->openIdConnect->hasSetPasswordAccess($account);
+
+    $this->assertEquals($expectedResult, $actualResult);
+  }
+
+  /**
+   * Data provider for the testHasSetPasswordAccess method.
+   *
+   * @return array|array[]
+   *   Data provider parameters for the testHasSetPassword() method.
+   */
+  public function dataProviderForHasSetPasswordAccess(): array {
+    $connectedAccounts = [
+      $this->randomMachineName() => 'sub',
+    ];
+
+    return [
+      [
+        $this->currentUser, FALSE, [], TRUE,
+      ],
+      [
+        $this->currentUser, TRUE, [], TRUE,
+      ],
+      [
+        NULL, TRUE, [], TRUE,
+      ],
+      [
+        NULL, FALSE, [], TRUE,
+      ],
+      [
+        $this->currentUser, FALSE, $connectedAccounts, FALSE,
+      ],
+      [
+        $this->currentUser, TRUE, $connectedAccounts, TRUE,
+      ],
+      [
+        NULL, TRUE, $connectedAccounts, TRUE,
+      ],
+      [
+        NULL, FALSE, $connectedAccounts, FALSE,
       ],
     ];
   }
