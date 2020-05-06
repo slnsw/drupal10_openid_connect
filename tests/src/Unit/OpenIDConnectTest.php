@@ -14,6 +14,8 @@ use Drupal\openid_connect\OpenIDConnectAuthmap;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserDataInterface;
 use Drupal\openid_connect\OpenIDConnect;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\user\UserInterface;
 
 /**
  * Class OpenIDConnectTest.
@@ -98,10 +100,19 @@ class OpenIDConnectTest extends UnitTestCase {
   protected $openIdConnect;
 
   /**
+   * Mock of the userStorageInterface.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
+  protected $userStorage;
+
+  /**
    * {@inheritDoc}
    */
   protected function setUp() {
     parent::setUp();
+
+    require_once 'UserPasswordFixture.php';
 
     // Mock the config_factory service.
     $this->configFactory = $this
@@ -111,9 +122,17 @@ class OpenIDConnectTest extends UnitTestCase {
     $this->authMap = $this
       ->createMock(OpenIDConnectAuthmap::class);
 
+    $this->userStorage = $this
+      ->createMock(EntityStorageInterface::class);
+
     // Mock the entity type manager service.
     $this->entityTypeManager = $this
       ->createMock(EntityTypeManagerInterface::class);
+
+    $this->entityTypeManager->expects($this->once())
+      ->method('getStorage')
+      ->with('user')
+      ->willReturn($this->userStorage);
 
     $this->entityFieldManager = $this
       ->createMock(EntityFieldManagerInterface::class);
@@ -337,6 +356,124 @@ class OpenIDConnectTest extends UnitTestCase {
       ],
       [
         NULL, FALSE, $connectedAccounts, FALSE,
+      ],
+    ];
+  }
+
+  /**
+   * Test for the createUser method.
+   *
+   * @param string $sub
+   *   The sub to use.
+   * @param array $userinfo
+   *   The userinfo array containing the email key.
+   * @param string $client_name
+   *   The client name for the user.
+   * @param bool $status
+   *   The user status.
+   * @param bool $duplicate
+   *   Whether to test a duplicate username.
+   *
+   * @dataProvider dataProviderForCreateUser
+   */
+  public function testCreateUser(
+    string $sub,
+    array $userinfo,
+    string $client_name,
+    bool $status,
+    bool $duplicate
+  ): void {
+    // Mock the expected username.
+    $expectedUserName = 'oidc_' . $client_name . '_' . md5($sub);
+
+    // If the preferred username is defined, use it instead.
+    if (array_key_exists('preferred_username', $userinfo)) {
+      $expectedUserName = trim($userinfo['preferred_username']);
+    }
+
+    // If the name key exists, use it.
+    if (array_key_exists('name', $userinfo)) {
+      $expectedUserName = trim($userinfo['name']);
+    }
+
+    $expectedAccountArray = [
+      'name' => ($duplicate ? "{$expectedUserName}_1" : $expectedUserName),
+      'pass' => 'TestPassword123',
+      'mail' => $userinfo['email'],
+      'init' => $userinfo['email'],
+      'status' => $status,
+      'openid_connect_client' => $client_name,
+      'openid_connect_sub' => $sub,
+    ];
+
+    // Mock the user account to be created.
+    $account = $this
+      ->createMock(UserInterface::class);
+    $account->expects($this->once())
+      ->method('save')
+      ->willReturn(1);
+
+    $this->userStorage->expects($this->once())
+      ->method('create')
+      ->with($expectedAccountArray)
+      ->willReturn($account);
+
+    if ($duplicate) {
+      $this->userStorage->expects($this->exactly(2))
+        ->method('loadByProperties')
+        ->withConsecutive(
+          [['name' => $expectedUserName]],
+          [['name' => "{$expectedUserName}_1"]]
+        )
+        ->willReturnOnConsecutiveCalls([1], []);
+    }
+    else {
+      $this->userStorage->expects($this->once())
+        ->method('loadByProperties')
+        ->with(['name' => $expectedUserName])
+        ->willReturn([]);
+    }
+
+    $actualResult = $this->openIdConnect
+      ->createUser($sub, $userinfo, $client_name, $status);
+
+    $this->assertInstanceOf('\Drupal\user\UserInterface', $actualResult);
+  }
+
+  /**
+   * Data provider for the testCreateUser method.
+   *
+   * @return array|array[]
+   *   The parameters to pass to testCreateUser().
+   */
+  public function dataProviderForCreateUser(): array {
+    return [
+      [
+        $this->randomMachineName(),
+        ['email' => 'test@123.com'],
+        '',
+        FALSE,
+        FALSE,
+      ],
+      [
+        $this->randomMachineName(),
+        [
+          'email' => 'test@test123.com',
+          'name' => $this->randomMachineName(),
+        ],
+        $this->randomMachineName(),
+        TRUE,
+        FALSE,
+      ],
+      [
+        $this->randomMachineName(),
+        [
+          'email' => 'test@test456.com',
+          'preferred_username' => $this->randomMachineName(),
+        ],
+        $this->randomMachineName(),
+        TRUE,
+        TRUE,
       ],
     ];
   }
