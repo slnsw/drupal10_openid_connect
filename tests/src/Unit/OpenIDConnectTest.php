@@ -1085,4 +1085,286 @@ class OpenIDConnectTest extends UnitTestCase {
     ];
   }
 
+  /**
+   * Test the connectCurrentUser method.
+   *
+   * @param bool $authenticated
+   *   Whether the user is authenticated.
+   * @param array $tokens
+   *   The tokens to return.
+   * @param array $userData
+   *   The user data array.
+   * @param array $userInfo
+   *   The user infor array.
+   * @param bool $expectedResult
+   *   The expected result of the method.
+   *
+   * @dataProvider dataProviderForConnectCurrentUser
+   */
+  public function testConnectCurrentUser(
+    bool $authenticated,
+    array $tokens,
+    array $userData,
+    array $userInfo,
+    bool $expectedResult
+  ): void {
+    $pluginId = $this->randomMachineName();
+
+    $client = $this
+      ->createMock(OpenIDConnectClientInterface::class);
+
+    $client->expects($this->any())
+      ->method('getPluginId')
+      ->willReturn($pluginId);
+
+    $this->currentUser->expects($this->once())
+      ->method('isAuthenticated')
+      ->willReturn($authenticated);
+
+    if (!$authenticated) {
+      $this->expectException('RuntimeException');
+    }
+    else {
+      $client->expects($this->once())
+        ->method('decodeIdToken')
+        ->with($tokens['id_token'])
+        ->willReturn($userData);
+
+      $client->expects($this->once())
+        ->method('retrieveUserInfo')
+        ->with($tokens['access_token'])
+        ->willReturn($userInfo);
+
+      if (empty($userInfo) && empty($userData)) {
+        $this->oidcLogger->expects($this->once())
+          ->method('error')
+          ->with(
+            'No "sub" found from @provider (@code @error). Details: @details',
+            ['@provider' => $pluginId]
+          );
+      }
+
+      if (isset($userInfo['email']) && empty($userInfo['email'])) {
+        $this->oidcLogger->expects($this->once())
+          ->method('error')
+          ->with(
+            'No e-mail address provided by @provider (@code @error). Details: @details',
+            ['@provider' => $pluginId]
+          );
+      }
+
+      if (isset($userData['sub']) && $userData['sub'] === 'invalid') {
+        $account = $this
+          ->createMock(UserInterface::class);
+
+        $this->authMap->expects($this->once())
+          ->method('userLoadBySub')
+          ->willReturn($account);
+
+        $this->moduleHandler->expects($this->once())
+          ->method('invokeAll')
+          ->with('openid_connect_pre_authorize')
+          ->willReturn([FALSE]);
+      }
+
+      if (isset($userData['sub']) && $userData['sub'] === 'different_account') {
+        $accountId = 8675309;
+        $userId = 3456;
+
+        $this->currentUser->expects($this->once())
+          ->method('id')
+          ->willReturn($userId);
+
+        $account = $this
+          ->createMock(UserInterface::class);
+
+        $account->expects($this->once())
+          ->method('id')
+          ->willReturn($accountId);
+
+        $this->authMap->expects($this->once())
+          ->method('userLoadBySub')
+          ->willReturn($account);
+
+        $this->moduleHandler->expects($this->once())
+          ->method('invokeAll')
+          ->with('openid_connect_pre_authorize')
+          ->willReturn([$account]);
+
+        $this->messenger->expects($this->once())
+          ->method('addError');
+      }
+
+      if (isset($userData['sub']) && $userData['sub'] === 'no_account') {
+        $accountId = 8675309;
+
+        $this->currentUser->expects($this->once())
+          ->method('id')
+          ->willReturn($accountId);
+
+        $account = $this
+          ->createMock(UserInterface::class);
+
+        $this->userStorage->expects($this->once())
+          ->method('load')
+          ->with($accountId)
+          ->willReturn($account);
+
+        $this->authMap->expects($this->once())
+          ->method('userLoadBySub')
+          ->willReturn(FALSE);
+
+        $immutableConfig = $this
+          ->createMock(ImmutableConfig::class);
+
+        $immutableConfig->expects($this->once())
+          ->method('get')
+          ->with('always_save_userinfo')
+          ->willReturn($userData['always_save']);
+
+        if ($userData['always_save'] === TRUE) {
+          $this->entityFieldManager->expects($this->once())
+            ->method('getFieldDefinitions')
+            ->with('user', 'user')
+            ->willReturn(['mail' => 'mail', 'name' => 'name']);
+
+          $this->moduleHandler->expects($this->exactly(3))
+            ->method('invokeAll')
+            ->withConsecutive(
+              ['openid_connect_pre_authorize'],
+              ['openid_connect_userinfo_save'],
+              ['openid_connect_post_authorize']
+            )
+            ->willReturnOnConsecutiveCalls(
+              [],
+              TRUE,
+              TRUE
+            );
+
+        }
+        else {
+          $this->moduleHandler->expects($this->exactly(2))
+            ->method('invokeAll')
+            ->withConsecutive(
+              ['openid_connect_pre_authorize'],
+              ['openid_connect_post_authorize']
+            )
+            ->willReturnOnConsecutiveCalls(
+              [],
+              TRUE
+            );
+        }
+
+        $this->configFactory->expects($this->once())
+          ->method('get')
+          ->with('openid_connect.settings')
+          ->willReturn($immutableConfig);
+      }
+    }
+
+    $result = $this->openIdConnect->connectCurrentUser($client, $tokens);
+
+    $this->assertEquals($expectedResult, $result);
+
+  }
+
+  /**
+   * Data provider for the testConnectCurrentUser method.
+   *
+   * @return array|array[]
+   *   Array of parameters to pass to testConnectCurrentUser().
+   */
+  public function dataProviderForConnectCurrentUser(): array {
+    return [
+      [
+        FALSE,
+        [],
+        [],
+        [],
+        FALSE,
+      ],
+      [
+        TRUE,
+        [
+          'id_token' => $this->randomMachineName(),
+          'access_token' => $this->randomMachineName(),
+        ],
+        [],
+        [],
+        FALSE,
+      ],
+      [
+        TRUE,
+        [
+          'id_token' => $this->randomMachineName(),
+          'access_token' => $this->randomMachineName(),
+        ],
+        [],
+        [
+          'email' => FALSE,
+        ],
+        FALSE,
+      ],
+      [
+        TRUE,
+        [
+          'id_token' => $this->randomMachineName(),
+          'access_token' => $this->randomMachineName(),
+        ],
+        [
+          'sub' => 'invalid',
+        ],
+        [
+          'email' => 'valid@email.com',
+        ],
+        FALSE,
+      ],
+      [
+        TRUE,
+        [
+          'id_token' => $this->randomMachineName(),
+          'access_token' => $this->randomMachineName(),
+        ],
+        [
+          'sub' => 'different_account',
+        ],
+        [
+          'email' => 'valid@email.com',
+        ],
+        FALSE,
+      ],
+      [
+        TRUE,
+        [
+          'id_token' => $this->randomMachineName(),
+          'access_token' => $this->randomMachineName(),
+        ],
+        [
+          'sub' => 'no_account',
+          'always_save' => FALSE,
+        ],
+        [
+          'email' => 'valid@email.com',
+        ],
+        TRUE,
+      ],
+      [
+        TRUE,
+        [
+          'id_token' => $this->randomMachineName(),
+          'access_token' => $this->randomMachineName(),
+        ],
+        [
+          'sub' => 'no_account',
+          'always_save' => TRUE,
+        ],
+        [
+          'email' => 'valid@email.com',
+          'name' => $this->randomMachineName(),
+        ],
+        TRUE,
+      ],
+    ];
+  }
+
 }
