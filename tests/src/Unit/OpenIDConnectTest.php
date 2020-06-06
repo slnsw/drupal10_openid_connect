@@ -12,6 +12,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\openid_connect\OpenIDConnectAuthmap;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
 use Drupal\Tests\UnitTestCase;
+use Drupal\user\Entity\User;
 use Drupal\user\UserDataInterface;
 use Drupal\openid_connect\OpenIDConnect;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -19,6 +20,10 @@ use Drupal\user\UserInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Entity\EntityTypeRepositoryInterface;
+use Drupal\file\Entity\File;
+use Drupal\Core\Field\FieldItemListInterface;
 
 /**
  * Class OpenIDConnectTest.
@@ -122,6 +127,14 @@ class OpenIDConnectTest extends UnitTestCase {
   protected function setUp() {
     parent::setUp();
 
+    $oldFileMock = $this->createMock(File::class);
+    $oldFileMock->expects($this->any())
+      ->method('id')
+      ->willReturn(123);
+
+    // Add this mock to the globals for the file_save_data fixture.
+    $GLOBALS['oldFileMock'] = $oldFileMock;
+
     require_once 'UserPasswordFixture.php';
 
     // Mock the config_factory service.
@@ -177,6 +190,8 @@ class OpenIDConnectTest extends UnitTestCase {
 
     $container = new ContainerBuilder();
     $container->set('string_translation', $this->getStringTranslationStub());
+    $container->set('entity_type.repository', $this->createMock(EntityTypeRepositoryInterface::class));
+    $container->set('entity_type.manager', $this->createMock(EntityTypeManagerInterface::class));
     \Drupal::setContainer($container);
 
     $this->openIdConnect = new OpenIDConnect(
@@ -1108,6 +1123,7 @@ class OpenIDConnectTest extends UnitTestCase {
     array $userInfo,
     bool $expectedResult
   ): void {
+    $exceptionExpected = FALSE;
     $pluginId = $this->randomMachineName();
 
     $client = $this
@@ -1203,7 +1219,7 @@ class OpenIDConnectTest extends UnitTestCase {
           ->willReturn($accountId);
 
         $account = $this
-          ->createMock(UserInterface::class);
+          ->createMock(User::class);
 
         $this->userStorage->expects($this->once())
           ->method('load')
@@ -1214,19 +1230,105 @@ class OpenIDConnectTest extends UnitTestCase {
           ->method('userLoadBySub')
           ->willReturn(FALSE);
 
-        $immutableConfig = $this
-          ->createMock(ImmutableConfig::class);
-
-        $immutableConfig->expects($this->once())
-          ->method('get')
-          ->with('always_save_userinfo')
-          ->willReturn($userData['always_save']);
+        $mappings = [
+          'mail' => 'mail',
+          'name' => 'name',
+        ];
 
         if ($userData['always_save'] === TRUE) {
+          $fieldDefinitions = [];
+          foreach ($userInfo as $key => $value) {
+            $mappings[$key] = $key;
+
+            switch ($key) {
+              case 'email':
+                $returnType = 'string';
+                break;
+
+              case 'field_string':
+                $account->expects($this->once())
+                  ->method('set');
+
+                $returnType = 'string';
+                break;
+
+              case 'field_string_long':
+                $account->expects($this->once())
+                  ->method('set');
+                $returnType = 'string_long';
+                break;
+
+              case 'field_datetime':
+                $account->expects($this->once())
+                  ->method('set');
+                $returnType = 'datetime';
+                break;
+
+              case 'field_image':
+                $account->expects($this->once())
+                  ->method('set');
+
+                $returnType = 'image';
+
+                $mockFile = $this->createMock(File::class);
+                $mockFile->expects($this->once())
+                  ->method('delete');
+
+                $fieldItem = $this
+                  ->createMock(FieldItemListInterface::class);
+                $fieldItem->expects($this->once())
+                  ->method('__get')
+                  ->with('entity')
+                  ->willReturn($mockFile);
+
+                $account->expects($this->once())
+                  ->method('__get')
+                  ->willReturn($fieldItem);
+                break;
+
+              case 'field_invalid':
+                $account->expects($this->never())
+                  ->method('set');
+
+                $this->oidcLogger->expects($this->once())
+                  ->method('error')
+                  ->with(
+                    'Could not save user info, property type not implemented: %property_type',
+                    ['%property_type' => $key]
+                  );
+                $returnType = $key;
+                break;
+
+              case 'field_image_exception':
+                $exception = $this
+                  ->createMock(InvalidArgumentException::class);
+
+                $account->expects($this->once())
+                  ->method('set')
+                  ->willThrowException($exception);
+
+                $returnType = 'string';
+                break;
+
+              default:
+                $returnType = $key;
+                break;
+            }
+            $mock = $this
+              ->createMock(FieldDefinitionInterface::class);
+
+            $mock->expects($this->any())
+              ->method('getType')
+              ->willReturn($returnType);
+
+            $fieldDefinitions[$key] = $mock;
+
+          }
+
           $this->entityFieldManager->expects($this->once())
             ->method('getFieldDefinitions')
             ->with('user', 'user')
-            ->willReturn(['mail' => 'mail', 'name' => 'name']);
+            ->willReturn($fieldDefinitions);
 
           $this->moduleHandler->expects($this->exactly(3))
             ->method('invokeAll')
@@ -1255,7 +1357,18 @@ class OpenIDConnectTest extends UnitTestCase {
             );
         }
 
-        $this->configFactory->expects($this->once())
+        $immutableConfig = $this
+          ->createMock(ImmutableConfig::class);
+
+        $immutableConfig->expects($this->atLeastOnce())
+          ->method('get')
+          ->withConsecutive(['always_save_userinfo'], ['userinfo_mappings'])
+          ->willReturnOnConsecutiveCalls(
+            $userData['always_save'],
+            $mappings
+          );
+
+        $this->configFactory->expects($this->atLeastOnce())
           ->method('get')
           ->with('openid_connect.settings')
           ->willReturn($immutableConfig);
@@ -1265,7 +1378,6 @@ class OpenIDConnectTest extends UnitTestCase {
     $result = $this->openIdConnect->connectCurrentUser($client, $tokens);
 
     $this->assertEquals($expectedResult, $result);
-
   }
 
   /**
@@ -1361,6 +1473,108 @@ class OpenIDConnectTest extends UnitTestCase {
         [
           'email' => 'valid@email.com',
           'name' => $this->randomMachineName(),
+        ],
+        TRUE,
+      ],
+      [
+        TRUE,
+        [
+          'id_token' => $this->randomMachineName(),
+          'access_token' => $this->randomMachineName(),
+        ],
+        [
+          'sub' => 'no_account',
+          'always_save' => TRUE,
+        ],
+        [
+          'name' => $this->randomMachineName(),
+          'field_string' => 'This is a string',
+          'email' => 'valid@email.com',
+        ],
+        TRUE,
+      ],
+      [
+        TRUE,
+        [
+          'id_token' => $this->randomMachineName(),
+          'access_token' => $this->randomMachineName(),
+        ],
+        [
+          'sub' => 'no_account',
+          'always_save' => TRUE,
+        ],
+        [
+          'field_string_long' => 'This is long text.',
+          'email' => 'valid@email.com',
+          'name' => $this->randomMachineName(),
+        ],
+        TRUE,
+      ],
+      [
+        TRUE,
+        [
+          'id_token' => $this->randomMachineName(),
+          'access_token' => $this->randomMachineName(),
+        ],
+        [
+          'sub' => 'no_account',
+          'always_save' => TRUE,
+        ],
+        [
+          'field_datetime' => '2020-05-20',
+          'email' => 'valid@email.com',
+          'name' => $this->randomMachineName(),
+        ],
+        TRUE,
+      ],
+      [
+        TRUE,
+        [
+          'id_token' => $this->randomMachineName(),
+          'access_token' => $this->randomMachineName(),
+        ],
+        [
+          'sub' => 'no_account',
+          'always_save' => TRUE,
+        ],
+        [
+          'name' => $this->randomMachineName(),
+          'field_image' => realpath(__DIR__) . '/image.png',
+          'email' => 'valid@email.com',
+        ],
+        TRUE,
+      ],
+      [
+        TRUE,
+        [
+          'id_token' => $this->randomMachineName(),
+          'access_token' => $this->randomMachineName(),
+        ],
+        [
+          'sub' => 'no_account',
+          'always_save' => TRUE,
+        ],
+        [
+          'name' => $this->randomMachineName(),
+          'field_invalid' => 'does_not_exist',
+          'email' => 'valid@email.com',
+        ],
+        TRUE,
+      ],
+      [
+        TRUE,
+        [
+          'id_token' => $this->randomMachineName(),
+          'access_token' => $this->randomMachineName(),
+        ],
+        [
+          'sub' => 'no_account',
+          'always_save' => TRUE,
+        ],
+        [
+          'name' => $this->randomMachineName(),
+          'field_image_exception' => new stdClass(),
+          'email' => 'valid@email.com',
         ],
         TRUE,
       ],
