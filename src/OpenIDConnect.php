@@ -81,7 +81,7 @@ class OpenIDConnect {
   /**
    * The email validator service.
    *
-   * @var \Egulias\EmailValidator\EmailValidatorInterface
+   * @var \Drupal\Component\Utility\EmailValidatorInterface
    */
   protected $emailValidator;
 
@@ -107,7 +107,7 @@ class OpenIDConnect {
    *   Account proxy for the currently logged-in user.
    * @param \Drupal\user\UserDataInterface $user_data
    *   The user data service.
-   * @param \Egulias\EmailValidator\EmailValidatorInterface $email_validator
+   * @param \Drupal\Component\Utility\EmailValidatorInterface $email_validator
    *   The email validator service.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
