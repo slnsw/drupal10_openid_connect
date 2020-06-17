@@ -27,6 +27,8 @@ use Drupal\Core\Field\FieldItemListInterface;
 
 /**
  * Class OpenIDConnectTest.
+ *
+ * @group openid_connect
  */
 class OpenIDConnectTest extends UnitTestCase {
 
