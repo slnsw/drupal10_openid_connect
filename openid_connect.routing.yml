@@ -13,6 +13,8 @@ openid_connect.redirect_controller_redirect:
     _title: 'OpenID Connect redirect page'
   requirements:
     _custom_access: '\Drupal\openid_connect\Controller\OpenIDConnectRedirectController::access'
+  options:
+    _maintenance_access: TRUE
 
 openid_connect.accounts_controller_index:
   path: '/user/{user}/connected-accounts'
