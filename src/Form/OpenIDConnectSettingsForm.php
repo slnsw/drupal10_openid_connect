@@ -179,6 +179,19 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
       '#default_value' => $settings->get('connect_existing_users'),
     ];
 
+    $form['user_login_display'] = array(
+      '#type' => 'radios',
+      '#title' => $this->t('OpenID buttons display in user login form'),
+      '#options' => array(
+        'hidden' => $this->t('Hidden'),
+        'above' => $this->t('Above'),
+        'below' => $this->t('Below'),
+        'replace' => $this->t('Replace'),
+      ),
+      '#description' => $this->t("Modify the user login form to show the the OpenID login buttons. If the 'Replace' option is selected, only the OpenID buttons will be displayed. In this case, pass the 'showcore' URL parameter to return to a password-based login form."),
+      '#default_value' => $settings->get('user_login_display'),
+    );
+
     $form['userinfo_mappings'] = [
       '#title' => $this->t('User claims mapping'),
       '#type' => 'fieldset',
@@ -257,6 +270,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
       ->set('connect_existing_users', $form_state->getValue('connect_existing_users'))
       ->set('override_registration_settings', $form_state->getValue('override_registration_settings'))
       ->set('userinfo_mappings', $form_state->getValue('userinfo_mappings'))
+      ->set('user_login_display', $form_state->getValue('user_login_display'))
       ->save();
 
     // Get clients' enabled status.

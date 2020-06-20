@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
@@ -132,6 +133,36 @@ function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
     $account_form['current_pass']['#access'] = FALSE;
     $account_form['current_pass_required_values']['#value'] = [];
     $account_form['pass']['#access'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function openid_connect_form_user_login_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  $user_login_display = \Drupal::config('openid_connect.settings')
+    ->get('user_login_display');
+
+  if ($user_login_display != 'hidden') {
+    $openid_form = \Drupal::formBuilder()->getForm('Drupal\openid_connect\Form\OpenIDConnectLoginForm');
+    switch ($user_login_display) {
+      case 'above':
+        $form['#prefix'] = \Drupal::service('renderer')->render($openid_form);
+        break;
+
+      case 'below':
+        $form['#suffix'] = \Drupal::service('renderer')->render($openid_form);
+        break;
+
+      case 'replace':
+        // Do nothing in case the query contains the 'showcore' parameter.
+        $query = \Drupal::request()->query;
+        if (!$query->has('showcore')) {
+          // Replace the user login form with the google domain login button.
+          $form = $openid_form;
+        }
+        break;
+    }
   }
 }
 
