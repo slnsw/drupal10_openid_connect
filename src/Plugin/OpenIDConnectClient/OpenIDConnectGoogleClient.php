@@ -38,7 +38,7 @@ class OpenIDConnectGoogleClient extends OpenIDConnectClientBase {
     return [
       'authorization' => 'https://accounts.google.com/o/oauth2/auth',
       'token' => 'https://accounts.google.com/o/oauth2/token',
-      'userinfo' => 'https://www.googleapis.com/plus/v1/people/me/openIdConnect',
+      'userinfo' => 'https://openidconnect.googleapis.com/v1/userinfo',
     ];
   }
 
