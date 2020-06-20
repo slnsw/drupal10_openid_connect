@@ -32,6 +32,7 @@ use stdClass;
 
 /**
  * Class OpenIDConnectTest.
+ *
  * @coversDefaultClass \Drupal\openid_connect\OpenIDConnect
  * @group openid_connect
  */
@@ -575,12 +576,6 @@ class OpenIDConnectTest extends UnitTestCase {
     $client = $this
       ->createMock(OpenIDConnectClientInterface::class);
 
-    $moduleHandlerCount = 1;
-
-    if ($preAuthorize) {
-      $moduleHandlerCount = 3;
-    }
-
     if ($authenticated) {
       $this->expectException('RuntimeException');
     }
@@ -656,14 +651,6 @@ class OpenIDConnectTest extends UnitTestCase {
           $account->method('id')->willReturn(1234);
           $account->method('isNew')->willReturn(FALSE);
 
-          $context = [
-            'tokens' => $tokens,
-            'plugin_id' => $clientPluginId,
-            'user_data' => $userData,
-            'userinfo' => $userInfo,
-            'sub' => $userInfo['sub'],
-          ];
-
           $this->authMap->expects($this->once())
             ->method('userLoadBySub')
             ->willReturn($account);
@@ -711,13 +698,6 @@ class OpenIDConnectTest extends UnitTestCase {
       }
       else {
         $account = FALSE;
-        $context = [
-          'tokens' => $tokens,
-          'plugin_id' => $clientPluginId,
-          'user_data' => $userData,
-          'userinfo' => $userInfo,
-          'sub' => $userInfo['sub'],
-        ];
 
         $this->authMap->expects($this->once())
           ->method('userLoadBySub')
@@ -1141,7 +1121,6 @@ class OpenIDConnectTest extends UnitTestCase {
     array $userInfo,
     bool $expectedResult
   ): void {
-    $exceptionExpected = FALSE;
     $pluginId = $this->randomMachineName();
 
     $client = $this

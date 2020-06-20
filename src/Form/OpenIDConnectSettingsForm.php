@@ -179,18 +179,18 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
       '#default_value' => $settings->get('connect_existing_users'),
     ];
 
-    $form['user_login_display'] = array(
+    $form['user_login_display'] = [
       '#type' => 'radios',
       '#title' => $this->t('OpenID buttons display in user login form'),
-      '#options' => array(
+      '#options' => [
         'hidden' => $this->t('Hidden'),
         'above' => $this->t('Above'),
         'below' => $this->t('Below'),
         'replace' => $this->t('Replace'),
-      ),
+      ],
       '#description' => $this->t("Modify the user login form to show the the OpenID login buttons. If the 'Replace' option is selected, only the OpenID buttons will be displayed. In this case, pass the 'showcore' URL parameter to return to a password-based login form."),
       '#default_value' => $settings->get('user_login_display'),
-    );
+    ];
 
     $form['userinfo_mappings'] = [
       '#title' => $this->t('User claims mapping'),
@@ -315,6 +315,8 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
    * @return \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface[]
    *   Associative array of OpenID Connect client plugins with client IDs
    *   as keys and the corresponding initialized client plugins as values.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
   protected function getClients() {
     if (!isset(self::$clients)) {
