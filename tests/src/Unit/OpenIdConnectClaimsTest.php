@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Drupal\openid_connect\tests;
+namespace Drupal\Tests\openid_connect\Unit;
 
 use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\Config\ImmutableConfig;
@@ -89,7 +89,7 @@ class OpenIdConnectClaimsTest extends UnitTestCase {
       ->method('alter')
       ->with('openid_connect_claims');
 
-    $claims = $this->openIdConnectClaims->getClaims();
+    $this->openIdConnectClaims->getClaims();
   }
 
   /**

@@ -2,6 +2,8 @@
 
 declare(strict_types = 1);
 
+namespace Drupal\Tests\openid_connect\Unit;
+
 use Drupal\Tests\UnitTestCase;
 use Drupal\openid_connect\OpenIDConnectStateToken;
 

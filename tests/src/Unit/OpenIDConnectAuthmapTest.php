@@ -2,6 +2,8 @@
 
 declare(strict_types = 1);
 
+namespace Drupal\Tests\openid_connect\Unit;
+
 use Drupal\Tests\UnitTestCase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -166,7 +168,7 @@ class OpenIDConnectAuthmapTest extends UnitTestCase {
   /**
    * Provide data to the testDeleteAssociationMethod test.
    *
-   * @return array|string[]
+   * @return array
    *   Return the client names to test.
    */
   public function getDeleteAssociationParameters(): array {
@@ -245,8 +247,9 @@ class OpenIDConnectAuthmapTest extends UnitTestCase {
    *   The parameters to pass to the userLoadBySubMethod.
    */
   public function getUserLoadBySubParameters(): array {
-    $test = new stdClass();
-    $test->uid = self::USER_ID;
+    $test = (object) [
+      'uid' => self::USER_ID,
+    ];
     $results = [
       $test,
     ];
@@ -325,9 +328,10 @@ class OpenIDConnectAuthmapTest extends UnitTestCase {
    *   Data to test the getConnectedAccounts method.
    */
   public function getConnectedAccountsParameters(): array {
-    $record = new stdClass();
-    $record->client_name = $this->randomMachineName();
-    $record->sub = $this->randomMachineName();
+    $record = (object) [
+      'client_name' => $this->randomMachineName(),
+      'sub' => $this->randomMachineName(),
+    ];
 
     return [
       [[]],

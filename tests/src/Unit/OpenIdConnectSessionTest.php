@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Drupal\openid_connect\tests;
+namespace Drupal\Tests\openid_connect\Unit;
 
 use Drupal\Core\Path\CurrentPathStack;
 use Drupal\openid_connect\OpenIDConnectSession;

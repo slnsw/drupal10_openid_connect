@@ -95,7 +95,7 @@ class OpenIDConnectAuthmap {
       ->condition('sub', $sub, '=')
       ->execute();
     foreach ($result as $record) {
-      /* @var \Drupal\user\Entity\User $account */
+      /** @var \Drupal\user\Entity\User $account */
       $account = $this->userStorage->load($record->uid);
       if (is_object($account)) {
         return $account;

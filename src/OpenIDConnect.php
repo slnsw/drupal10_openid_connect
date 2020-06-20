@@ -6,6 +6,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Extension\ModuleHandler;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
@@ -74,7 +75,7 @@ class OpenIDConnect {
   /**
    * The module handler.
    *
-   * @var Drupal\Core\Extension\ModuleHandler
+   * @var \Drupal\Core\Extension\ModuleHandler
    */
   protected $moduleHandler;
 
@@ -88,9 +89,16 @@ class OpenIDConnect {
   /**
    * The OpenID Connect logger channel.
    *
-   * @var Drupal\Core\Logger\LoggerChannelInterface
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
    */
   protected $logger;
+
+  /**
+   * File system.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  private $fileSystem;
 
   /**
    * Construct an instance of the OpenID Connect service.
@@ -115,6 +123,8 @@ class OpenIDConnect {
    *   The module handler.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger
    *   A logger channel factory instance.
+   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
+   *   The file system service.
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
@@ -126,7 +136,8 @@ class OpenIDConnect {
     EmailValidatorInterface $email_validator,
     MessengerInterface $messenger,
     ModuleHandler $module_handler,
-    LoggerChannelFactoryInterface $logger
+    LoggerChannelFactoryInterface $logger,
+    FileSystemInterface $fileSystem
   ) {
     $this->configFactory = $config_factory;
     $this->authmap = $authmap;
@@ -138,6 +149,7 @@ class OpenIDConnect {
     $this->messenger = $messenger;
     $this->moduleHandler = $module_handler;
     $this->logger = $logger->get('openid_connect');
+    $this->fileSystem = $fileSystem;
   }
 
   /**
@@ -213,7 +225,7 @@ class OpenIDConnect {
    * @param array $tokens
    *   The tokens as returned from
    *   OpenIDConnectClientInterface::retrieveTokens().
-   * @param string|array &$destination
+   * @param string|array $destination
    *   The path to redirect to after authorization.
    *
    * @return bool
@@ -249,7 +261,7 @@ class OpenIDConnect {
       return FALSE;
     }
 
-    /* @var \Drupal\user\UserInterface $account */
+    /** @var \Drupal\user\UserInterface|bool $account */
     $account = $this->authmap->userLoadBySub($sub, $client->getPluginId());
     $context = [
       'tokens' => $tokens,
@@ -279,7 +291,7 @@ class OpenIDConnect {
       }
     }
 
-    if ($account) {
+    if ($account !== FALSE) {
       // An existing account was found. Save user claims.
       if ($this->configFactory->get('openid_connect.settings')->get('always_save_userinfo')) {
         $context = [
@@ -307,6 +319,7 @@ class OpenIDConnect {
         'mail' => $userinfo['email'],
       ]);
       if ($accounts) {
+        /** @var \Drupal\user\UserInterface|bool $account */
         $account = reset($accounts);
         $connect_existing_users = $this->configFactory->get('openid_connect.settings')
           ->get('connect_existing_users');
@@ -328,24 +341,24 @@ class OpenIDConnect {
       // Respect possible override from OpenID-Connect settings.
       $register_override = $this->configFactory->get('openid_connect.settings')
         ->get('override_registration_settings');
-      if ($register === USER_REGISTER_ADMINISTRATORS_ONLY && $register_override) {
-        $register = USER_REGISTER_VISITORS;
+      if ($register === UserInterface::REGISTER_ADMINISTRATORS_ONLY && $register_override) {
+        $register = UserInterface::REGISTER_VISITORS;
       }
 
       if (empty($account)) {
         switch ($register) {
-          case USER_REGISTER_ADMINISTRATORS_ONLY:
+          case UserInterface::REGISTER_ADMINISTRATORS_ONLY:
             // Deny user registration.
             $this->messenger->addError($this->t('Only administrators can register new accounts.'));
             return FALSE;
 
-          case USER_REGISTER_VISITORS:
+          case UserInterface::REGISTER_VISITORS:
             // Create a new account if register settings is set to visitors or
             // override is active.
             $account = $this->createUser($sub, $userinfo, $client->getPluginId(), 1);
             break;
 
-          case USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL:
+          case UserInterface::REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL:
             // Create a new account and inform the user of the pending approval.
             $account = $this->createUser($sub, $userinfo, $client->getPluginId(), 0);
             $this->messenger->addMessage($this->t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.'));
@@ -414,7 +427,6 @@ class OpenIDConnect {
       throw new \RuntimeException('User not logged in');
     }
 
-    /* @var \Drupal\openid_connect\Authmap $authmap */
     $user_data = $client->decodeIdToken($tokens['id_token']);
     $userinfo = $client->retrieveUserInfo($tokens['access_token']);
 
@@ -444,7 +456,7 @@ class OpenIDConnect {
       return FALSE;
     }
 
-    /* @var \Drupal\user\UserInterface $account */
+    /** @var \Drupal\user\UserInterface|bool $account */
     $account = $this->authmap->userLoadBySub($sub, $client->getPluginId());
     $context = [
       'tokens' => $tokens,
@@ -474,12 +486,12 @@ class OpenIDConnect {
       }
     }
 
-    if ($account && $account->id() !== $this->currentUser->id()) {
+    if ($account !== FALSE && $account->id() !== $this->currentUser->id()) {
       $this->messenger->addError($this->t('Another user is already connected to this @provider account.', $provider_param));
       return FALSE;
     }
 
-    if (!$account) {
+    if ($account === FALSE) {
       $account = $this->userStorage->load($this->currentUser->id());
       $this->authmap->createAssociation($account, $client->getPluginId(), $sub);
     }
@@ -682,12 +694,13 @@ class OpenIDConnect {
 
               case 'image':
                 // Create file object from remote URL.
-                $basename = explode('?', drupal_basename($claim_value))[0];
+                $basename = explode('?', $this->fileSystem->basename($claim_value))[0];
                 $data = file_get_contents($claim_value);
+
                 $file = file_save_data(
                   $data,
                   'public://user-picture-' . $account->id() . '-' . $basename,
-                  FILE_EXISTS_RENAME
+                  FileSystemInterface::EXISTS_RENAME
                 );
 
                 // Cleanup the old file.

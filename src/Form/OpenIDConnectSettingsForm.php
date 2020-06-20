@@ -37,7 +37,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
   /**
    * The entity manager.
    *
-   * @var \Drupal\Core\Entity\EntityManager
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
    */
   protected $entityFieldManager;
 
@@ -328,7 +328,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
           ->getEditable('openid_connect.settings.' . $client_name)
           ->get('settings');
 
-        /* @var \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface $client */
+        /** @var \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface $client */
         $client = $this->pluginManager->createInstance(
           $client_name,
           $configuration ?: []

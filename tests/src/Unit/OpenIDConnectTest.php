@@ -2,6 +2,8 @@
 
 declare(strict_types = 1);
 
+namespace Drupal\Tests\openid_connect\Unit;
+
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -24,10 +26,13 @@ use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Entity\EntityTypeRepositoryInterface;
 use Drupal\file\Entity\File;
 use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\File\FileSystemInterface;
+use Psr\Log\InvalidArgumentException;
+use stdClass;
 
 /**
  * Class OpenIDConnectTest.
- *
+ * @coversDefaultClass \Drupal\openid_connect\OpenIDConnect
  * @group openid_connect
  */
 class OpenIDConnectTest extends UnitTestCase {
@@ -124,6 +129,13 @@ class OpenIDConnectTest extends UnitTestCase {
   protected $oidcLogger;
 
   /**
+   * Mock of the FileSystemInterface.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
+  protected $fileSystem;
+
+  /**
    * {@inheritDoc}
    */
   protected function setUp() {
@@ -190,6 +202,9 @@ class OpenIDConnectTest extends UnitTestCase {
       ->with('openid_connect')
       ->willReturn($this->oidcLogger);
 
+    $this->fileSystem = $this
+      ->createMock(FileSystemInterface::class);
+
     $container = new ContainerBuilder();
     $container->set('string_translation', $this->getStringTranslationStub());
     $container->set('entity_type.repository', $this->createMock(EntityTypeRepositoryInterface::class));
@@ -206,7 +221,8 @@ class OpenIDConnectTest extends UnitTestCase {
       $this->emailValidator,
       $this->messenger,
       $this->moduleHandler,
-      $this->logger
+      $this->logger,
+      $this->fileSystem
     );
   }
 
@@ -312,7 +328,7 @@ class OpenIDConnectTest extends UnitTestCase {
   /**
    * Test for the hasSetPassword method.
    *
-   * @param \Drupal\Core\Session\AccountProxyInterface|null $account
+   * @param \Drupal\Tests\openid_connect\Unit\MockObject|null $account
    *   The account to test or null if none provided.
    * @param bool $hasPermission
    *   Whether the account should have the correct permission
@@ -325,7 +341,7 @@ class OpenIDConnectTest extends UnitTestCase {
    * @dataProvider dataProviderForHasSetPasswordAccess
    */
   public function testHasSetPasswordAccess(
-    ?AccountProxyInterface $account,
+    ?MockObject $account,
     bool $hasPermission,
     array $connectedAccounts,
     bool $expectedResult
@@ -709,7 +725,7 @@ class OpenIDConnectTest extends UnitTestCase {
 
         $this->moduleHandler->expects($this->any())
           ->method('invokeAll')
-          ->willReturnCallback(function (...$args) use ($account, $context) {
+          ->willReturnCallback(function (...$args) {
             $return = NULL;
             switch ($args[0]) {
               case 'openid_connect_pre_authorize':
@@ -787,7 +803,6 @@ class OpenIDConnectTest extends UnitTestCase {
                   ->willReturn(TRUE);
 
                 if ($accountExists) {
-                  var_dump($accountExists);
                   $this->messenger->expects($this->once())
                     ->method('addError');
                 }
@@ -887,6 +902,7 @@ class OpenIDConnectTest extends UnitTestCase {
         $this->messenger,
         $this->moduleHandler,
         $this->logger,
+        $this->fileSystem,
       ])
       ->setMethods([
         'userPropertiesIgnore',
@@ -1267,6 +1283,10 @@ class OpenIDConnectTest extends UnitTestCase {
                 break;
 
               case 'field_image':
+                $this->fileSystem->expects($this->once())
+                  ->method('basename')
+                  ->with($value)
+                  ->willReturn('test-file');
                 $account->expects($this->once())
                   ->method('set');
 

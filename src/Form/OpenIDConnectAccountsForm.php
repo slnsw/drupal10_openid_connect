@@ -193,12 +193,12 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
     if ($op === 'disconnect') {
       $this->authmap->deleteAssociation($form_state->get('account')->id(), $client_name);
       $client = $this->pluginManager->getDefinition($client_name);
-      drupal_set_message($this->t('Account successfully disconnected from @client.', ['@client' => $client['label']]));
+      $this->messenger()->addMessage($this->t('Account successfully disconnected from @client.', ['@client' => $client['label']]));
       return;
     }
 
     if ($this->currentUser->id() !== $form_state->get('account')->id()) {
-      drupal_set_message($this->t("You cannot connect another user's account."), 'error');
+      $this->messenger()->addError($this->t("You cannot connect another user's account."));
       return;
     }
 

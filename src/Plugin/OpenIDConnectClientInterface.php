@@ -2,14 +2,15 @@
 
 namespace Drupal\openid_connect\Plugin;
 
-use Drupal\Component\Plugin\ConfigurablePluginInterface;
+use Drupal\Component\Plugin\ConfigurableInterface;
+use Drupal\Component\Plugin\DependentPluginInterface;
 use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Core\Plugin\PluginFormInterface;
 
 /**
  * Defines an interface for OpenID Connect client plugins.
  */
-interface OpenIDConnectClientInterface extends ConfigurablePluginInterface, PluginFormInterface, PluginInspectionInterface {
+interface OpenIDConnectClientInterface extends ConfigurableInterface, DependentPluginInterface, PluginFormInterface, PluginInspectionInterface {
 
   /**
    * Returns an array of endpoints.

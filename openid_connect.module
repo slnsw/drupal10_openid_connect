@@ -5,9 +5,14 @@
  * Hook implementations of the OpenID Connect module.
  */
 
+/** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+/** @noinspection PhpUnused */
+
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
+use Drupal\user\UserInterface;
 
 /**
  * Implements hook_help().
@@ -365,7 +370,7 @@ function openid_connect_extract_sub(array $user_data, array $userinfo) {
  *   The client.
  * @param array $tokens
  *   The tokens as returned from OpenIDConnectClientInterface::retrieveTokens().
- * @param string|array &$destination
+ * @param string|array $destination
  *   The path to redirect to after authorization.
  *
  * @return bool

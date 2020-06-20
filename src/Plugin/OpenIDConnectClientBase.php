@@ -16,6 +16,7 @@ use Exception;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Drupal\Component\Datetime\TimeInterface;
 
 /**
  * Base class for OpenID Connect client plugins.
@@ -45,6 +46,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   protected $loggerFactory;
 
   /**
+   * The datetime.time service.
+   *
+   * @var \Drupal\Component\Datetime\TimeInterface
+   */
+  protected $dateTime;
+
+  /**
    * The constructor.
    *
    * @param array $configuration
@@ -59,6 +67,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    *   The http client.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger factory.
+   * @param \Drupal\Component\Datetime\TimeInterface $datetime_time
+   *   The datetime.time service.
    */
   public function __construct(
       array $configuration,
@@ -66,7 +76,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $plugin_definition,
       RequestStack $request_stack,
       ClientInterface $http_client,
-      LoggerChannelFactoryInterface $logger_factory
+      LoggerChannelFactoryInterface $logger_factory,
+      TimeInterface $datetime_time = NULL
   ) {
     parent::__construct(
       $configuration,
@@ -77,6 +88,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $this->requestStack = $request_stack;
     $this->httpClient = $http_client;
     $this->loggerFactory = $logger_factory;
+    $this->dateTime = $datetime_time ?: \Drupal::service('datetime.time');
     $this->setConfiguration($configuration);
   }
 
@@ -95,7 +107,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $plugin_definition,
       $container->get('request_stack'),
       $container->get('http_client'),
-      $container->get('logger.factory')
+      $container->get('logger.factory'),
+      $container->get('datetime.time')
     );
   }
 
@@ -287,7 +300,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       ],
     ];
 
-    /* @var \GuzzleHttp\ClientInterface $client */
+    /** @var \GuzzleHttp\ClientInterface $client */
     $client = $this->httpClient;
     try {
       $response = $client->post($endpoints['token'], $request_options);
@@ -299,7 +312,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
         'access_token' => isset($response_data['access_token']) ? $response_data['access_token'] : NULL,
       ];
       if (array_key_exists('expires_in', $response_data)) {
-        $tokens['expire'] = REQUEST_TIME + $response_data['expires_in'];
+        $tokens['expire'] = $this->dateTime->getRequestTime() + $response_data['expires_in'];
       }
       if (array_key_exists('refresh_token', $response_data)) {
         $tokens['refresh_token'] = $response_data['refresh_token'];

@@ -35,19 +35,6 @@ function user_login_finalize(UserInterface $account) {
 }
 
 /**
- * This is a mock of the drupal_basename function.
- *
- * @param string $name
- *   The name of the file.
- *
- * @return string
- *   The basename for the file.
- */
-function drupal_basename(string $name) {
-  return 'test-file';
-}
-
-/**
  * Mock of the file_save_data function.
  *
  * @param string $data
