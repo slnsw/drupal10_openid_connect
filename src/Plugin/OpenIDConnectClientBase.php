@@ -5,6 +5,7 @@ namespace Drupal\openid_connect\Plugin;
 use Drupal\Component\Plugin\PluginBase;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\GeneratedUrl;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -236,16 +237,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    */
   public function authorize($scope = 'openid email') {
     $redirect_uri = $this->getRedirectUrl()->toString(TRUE);
-
-    $url_options = [
-      'query' => [
-        'client_id' => $this->configuration['client_id'],
-        'response_type' => 'code',
-        'scope' => $scope,
-        'redirect_uri' => $redirect_uri->getGeneratedUrl(),
-        'state' => OpenIDConnectStateToken::create(),
-      ],
-    ];
+    $url_options = $this->getUrlOptions($scope, $redirect_uri);
 
     $endpoints = $this->getEndpoints();
     // Clear _GET['destination'] because we need to override it.
@@ -259,6 +251,29 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $this->pageCacheKillSwitch->trigger();
 
     return $response;
+  }
+
+  /**
+   * Helper function for URL options.
+   *
+   * @param string $scope
+   *   A string of scopes.
+   * @param \Drupal\Core\GeneratedUrl $redirect_uri
+   *   URI to redirect for authorization.
+   *
+   * @return array
+   *   Array with URL options.
+   */
+  protected function getUrlOptions($scope, GeneratedUrl $redirect_uri) {
+    return [
+      'query' => [
+        'client_id' => $this->configuration['client_id'],
+        'response_type' => 'code',
+        'scope' => $scope,
+        'redirect_uri' => $redirect_uri->getGeneratedUrl(),
+        'state' => OpenIDConnectStateToken::create(),
+      ],
+    ];
   }
 
   /**
