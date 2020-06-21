@@ -269,7 +269,7 @@ function hook_openid_connect_userinfo_save(UserInterface $account, array $contex
  *   An array of of properties to skip.
  *
  * @ingroup openid_connect_api
- * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.
+ * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.
  *   Use hook_openid_connect_user_properties_ignore_alter() instead.
  * @see https://www.drupal.org/project/openid_connect/issues/2921095
  */

@@ -182,7 +182,7 @@ class OpenIDConnect {
     $this->moduleHandler->alter('openid_connect_user_properties_ignore', $properties_ignore, $context);
     // Invoke deprecated hook with deprecation error message.
     // @todo Remove in RC1.
-    $this->moduleHandler->alterDeprecated('hook_openid_connect_user_properties_to_skip_alter() is deprecated and will be removed in 8.x-1.x-rc1.', 'openid_connect_user_properties_to_skip', $properties_ignore);
+    $this->moduleHandler->alterDeprecated('hook_openid_connect_user_properties_to_skip_alter() is deprecated and will be removed in 8.x-2.0.', 'openid_connect_user_properties_to_skip', $properties_ignore);
 
     $properties_ignore = array_unique($properties_ignore);
     return array_combine($properties_ignore, $properties_ignore);

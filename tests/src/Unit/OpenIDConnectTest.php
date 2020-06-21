@@ -262,7 +262,7 @@ class OpenIDConnectTest extends UnitTestCase {
     $this->moduleHandler->expects($this->once())
       ->method('alterDeprecated')
       ->with(
-        'hook_openid_connect_user_properties_to_skip_alter() is deprecated and will be removed in 8.x-1.x-rc1.', 'openid_connect_user_properties_to_skip',
+        'hook_openid_connect_user_properties_to_skip_alter() is deprecated and will be removed in 8.x-2.0.', 'openid_connect_user_properties_to_skip',
         $defaultPropertiesIgnore
       );
 

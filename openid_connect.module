@@ -178,13 +178,13 @@ function openid_connect_form_user_login_form_alter(&$form, FormStateInterface $f
  * @param array $userinfo
  *   An array with information about the user.
  *
- * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.
+ * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.
  *   Use Drupal\openid_connect\OpenIDConnect::saveUserinfo() or
  *   \Drupal::service('openid_connect.openid_connect')->saveUserinfo() instead.
  * @see https://www.drupal.org/project/openid_connect/issues/2961938
  */
 function openid_connect_save_userinfo(UserInterface $account, array $userinfo) {
-  @trigger_error("openid_connect_save_userinfo() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.  Use Drupal\openid_connect\OpenIDConnect::saveUserinfo() or \Drupal::service('openid_connect.openid_connect')->saveUserinfo() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
+  @trigger_error("openid_connect_save_userinfo() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.  Use Drupal\openid_connect\OpenIDConnect::saveUserinfo() or \Drupal::service('openid_connect.openid_connect')->saveUserinfo() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
   \Drupal::service('openid_connect.openid_connect')->saveUserinfo($account, $userinfo);
 }
 
@@ -194,26 +194,26 @@ function openid_connect_save_userinfo(UserInterface $account, array $userinfo) {
  * @param \Drupal\user\UserInterface $account
  *   The user account.
  *
- * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.
+ * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.
  *   Use Drupal\openid_connect\OpenIDConnect::loginUser() or
  *   user_login_finalize() instead.
  * @see https://www.drupal.org/project/openid_connect/issues/2961938
  */
 function openid_connect_login_user(UserInterface $account) {
-  @trigger_error("openid_connect_login_user() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1. Use Drupal\openid_connect\OpenIDConnect::loginUser() or user_login_finalize() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
+  @trigger_error("openid_connect_login_user() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0. Use Drupal\openid_connect\OpenIDConnect::loginUser() or user_login_finalize() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
   user_login_finalize($account);
 }
 
 /**
  * Save the current path in the session, for redirecting after authorization.
  *
- * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.
+ * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.
  *   Use Drupal\openid_connect\OpenIDConnectSession::saveDestination() or
  *   \Drupal::service('openid_connect.session')->saveDestination() instead.
  * @see https://www.drupal.org/project/openid_connect/issues/2961938
  */
 function openid_connect_save_destination() {
-  @trigger_error("openid_connect_save_destination() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1. Use Drupal\openid_connect\OpenIDConnectSession::saveDestination() or \Drupal::service('openid_connect.session')->saveDestination() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
+  @trigger_error("openid_connect_save_destination() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0. Use Drupal\openid_connect\OpenIDConnectSession::saveDestination() or \Drupal::service('openid_connect.session')->saveDestination() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
   \Drupal::service('openid_connect.session')->saveDestination();
 }
 
@@ -232,13 +232,13 @@ function openid_connect_save_destination() {
  * @return object|false
  *   The user object or FALSE on failure.
  *
- * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.
+ * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.
  *   Use Drupal\openid_connect\OpenIDConnect::createUser() or
  *   \Drupal::service('openid_connect.openid_connect')->createUser() instead.
  * @see https://www.drupal.org/project/openid_connect/issues/2961938
  */
 function openid_connect_create_user($sub, array $userinfo, $client_name, $status = 1) {
-  @trigger_error("openid_connect_create_user() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1. Use Drupal\openid_connect\OpenIDConnect::createUser() or \Drupal::service('openid_connect.openid_connect')->createUser() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
+  @trigger_error("openid_connect_create_user() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0. Use Drupal\openid_connect\OpenIDConnect::createUser() or \Drupal::service('openid_connect.openid_connect')->createUser() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
   return \Drupal::service('openid_connect.openid_connect')->createUser($sub, $userinfo, $client_name, $status);
 }
 
@@ -255,7 +255,7 @@ function openid_connect_create_user($sub, array $userinfo, $client_name, $status
  * @return string
  *   A unique username.
  *
- * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.
+ * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.
  *   No replacement is intended. The new method
  *   Drupal\openid_connect\OpenIDConnect::generateUsername() or
  *   \Drupal::service('openid_connect.openid_connect')->generateUsername()
@@ -263,7 +263,7 @@ function openid_connect_create_user($sub, array $userinfo, $client_name, $status
  * @see https://www.drupal.org/project/openid_connect/issues/2961938
  */
 function openid_connect_generate_username($sub, array $userinfo, $client_name) {
-  @trigger_error("openid_connect_generate_username() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1. No replacement is intended. The new method Drupal\openid_connect\OpenIDConnect::generateUsername() or \Drupal::service('openid_connect.openid_connect')->generateUsername() will be set protected for the OpenID Connect service. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
+  @trigger_error("openid_connect_generate_username() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0. No replacement is intended. The new method Drupal\openid_connect\OpenIDConnect::generateUsername() or \Drupal::service('openid_connect.openid_connect')->generateUsername() will be set protected for the OpenID Connect service. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
   return \Drupal::service('openid_connect.openid_connect')->generateUsername($sub, $userinfo, $client_name);
 }
 
@@ -276,7 +276,7 @@ function openid_connect_generate_username($sub, array $userinfo, $client_name) {
  * @return bool
  *   TRUE if a user exists with the given name, FALSE otherwise.
  *
- * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.
+ * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.
  *   No replacement is intended. The new method
  *   Drupal\openid_connect\OpenIDConnect::usernameExists() or
  *   \Drupal::service('openid_connect.openid_connect')->usernameExists()
@@ -284,7 +284,7 @@ function openid_connect_generate_username($sub, array $userinfo, $client_name) {
  * @see https://www.drupal.org/project/openid_connect/issues/2961938
  */
 function openid_connect_username_exists($name) {
-  @trigger_error("openid_connect_username_exists() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1. No replacement is intended. The new method Drupal\openid_connect\OpenIDConnect::usernameExists() or \Drupal::service('openid_connect.openid_connect')->usernameExists() will be set protected for the OpenID Connect service. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
+  @trigger_error("openid_connect_username_exists() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0. No replacement is intended. The new method Drupal\openid_connect\OpenIDConnect::usernameExists() or \Drupal::service('openid_connect.openid_connect')->usernameExists() will be set protected for the OpenID Connect service. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
   return \Drupal::service('openid_connect.openid_connect')->usernameExists($name);
 }
 
@@ -297,14 +297,14 @@ function openid_connect_username_exists($name) {
  * @return bool
  *   TRUE if access is granted, FALSE otherwise.
  *
- * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.
+ * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.
  *   Use Drupal\openid_connect\OpenIDConnect::hasSetPasswordAccess() or
  *   \Drupal::service('openid_connect.openid_connect')->hasSetPasswordAccess()
  *   instead.
  * @see https://www.drupal.org/project/openid_connect/issues/2961938
  */
 function openid_connect_set_password_access($account) {
-  @trigger_error("openid_connect_set_password_access() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1. Use Drupal\openid_connect\OpenIDConnect::hasSetPasswordAccess() or \Drupal::service('openid_connect.openid_connect')->hasSetPasswordAccess() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
+  @trigger_error("openid_connect_set_password_access() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0. Use Drupal\openid_connect\OpenIDConnect::hasSetPasswordAccess() or \Drupal::service('openid_connect.openid_connect')->hasSetPasswordAccess() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
   return \Drupal::service('openid_connect.openid_connect')->hasSetPasswordAccess($account);
 }
 
@@ -318,13 +318,13 @@ function openid_connect_set_password_access($account) {
  * @param string $sub
  *   The 'sub' property identifying the external account.
  *
- * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.
+ * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.
  *   Use Drupal\openid_connect\OpenIDConnectAuthmap::createAssociation() or
  *   \Drupal::service('openid_connect.authmap')->createAssociation() instead.
  * @see https://www.drupal.org/project/openid_connect/issues/2961938
  */
 function openid_connect_connect_account($account, $client_name, $sub) {
-  @trigger_error("openid_connect_connect_account() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1. Use Drupal\openid_connect\OpenIDConnectAuthmap::createAssociation() or \Drupal::service('openid_connect.authmap')->createAssociation() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
+  @trigger_error("openid_connect_connect_account() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0. Use Drupal\openid_connect\OpenIDConnectAuthmap::createAssociation() or \Drupal::service('openid_connect.authmap')->createAssociation() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
   \Drupal::service('openid_connect.authmap')->createAssociation($account, $client_name, $sub);
 }
 
@@ -336,13 +336,13 @@ function openid_connect_connect_account($account, $client_name, $sub) {
  * @param string $client_name
  *   The client machine name.
  *
- * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.
+ * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.
  *   Use Drupal\openid_connect\OpenIDConnectAuthmap::deleteAssociation() or
  *   \Drupal::service('openid_connect.authmap')->deleteAssociation() instead.
  * @see https://www.drupal.org/project/openid_connect/issues/2961938
  */
 function openid_connect_disconnect_account($account, $client_name) {
-  @trigger_error("openid_connect_disconnect_account() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1. Use Drupal\openid_connect\OpenIDConnectAuthmap::deleteAssociation() or \Drupal::service('openid_connect.authmap')->deleteAssociation() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
+  @trigger_error("openid_connect_disconnect_account() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0. Use Drupal\openid_connect\OpenIDConnectAuthmap::deleteAssociation() or \Drupal::service('openid_connect.authmap')->deleteAssociation() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
   \Drupal::service('openid_connect.authmap')->deleteAssociation($account->id(), $client_name);
 }
 
@@ -362,13 +362,13 @@ function openid_connect_disconnect_account($account, $client_name) {
  * @return string|false
  *   The sub, or FALSE if there was an error.
  *
- * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.
+ * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.
  *   Use Drupal\openid_connect\OpenIDConnect::extractSub() or
  *   \Drupal::service('openid_connect.openid_connect')->extractSub() instead.
  * @see https://www.drupal.org/project/openid_connect/issues/2961938
  */
 function openid_connect_extract_sub(array $user_data, array $userinfo) {
-  @trigger_error("openid_connect_extract_sub() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1. Use Drupal\openid_connect\OpenIDConnect::extractSub() or \Drupal::service('openid_connect.openid_connect')->extractSub() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
+  @trigger_error("openid_connect_extract_sub() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0. Use Drupal\openid_connect\OpenIDConnect::extractSub() or \Drupal::service('openid_connect.openid_connect')->extractSub() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
   return \Drupal::service('openid_connect.openid_connect')->extractSub($user_data, $userinfo);
 }
 
@@ -385,14 +385,14 @@ function openid_connect_extract_sub(array $user_data, array $userinfo) {
  * @return bool
  *   TRUE on success, FALSE on failure.
  *
- * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.
+ * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.
  *   Use Drupal\openid_connect\OpenIDConnect::completeAuthorization() or
  *   \Drupal::service('openid_connect.openid_connect')->completeAuthorization()
  *   instead.
  * @see https://www.drupal.org/project/openid_connect/issues/2961938
  */
 function openid_connect_complete_authorization($client, array $tokens, &$destination) {
-  @trigger_error("openid_connect_complete_authorization() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1. Use Drupal\openid_connect\OpenIDConnect::completeAuthorization() or \Drupal::service('openid_connect.openid_connect')->completeAuthorization() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
+  @trigger_error("openid_connect_complete_authorization() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0. Use Drupal\openid_connect\OpenIDConnect::completeAuthorization() or \Drupal::service('openid_connect.openid_connect')->completeAuthorization() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
   return \Drupal::service('openid_connect.openid_connect')->completeAuthorization($client, $tokens, $destination);
 }
 
@@ -407,13 +407,13 @@ function openid_connect_complete_authorization($client, array $tokens, &$destina
  * @return bool
  *   TRUE on success, FALSE on failure.
  *
- * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1.
+ * @deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0.
  *   Use Drupal\openid_connect\OpenIDConnect::connectCurrentUser() or
  *   \Drupal::service('openid_connect.openid_connect')->connectCurrentUser()
  *   instead.
  * @see https://www.drupal.org/project/openid_connect/issues/2961938
  */
 function openid_connect_connect_current_user($client, array $tokens) {
-  @trigger_error("openid_connect_connect_current_user() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-1.0-rc1. Use Drupal\openid_connect\OpenIDConnect::connectCurrentUser() or \Drupal::service('openid_connect.openid_connect')->connectCurrentUser() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
+  @trigger_error("openid_connect_connect_current_user() is deprecated in openid_connect:8.x-1.0-beta6 and is removed from openid_connect:8.x-2.0. Use Drupal\openid_connect\OpenIDConnect::connectCurrentUser() or \Drupal::service('openid_connect.openid_connect')->connectCurrentUser() instead. See https://www.drupal.org/project/openid_connect/issues/2961938", E_USER_DEPRECATED);
   return \Drupal::service('openid_connect.openid_connect')->connectCurrentUser($client, $tokens);
 }
