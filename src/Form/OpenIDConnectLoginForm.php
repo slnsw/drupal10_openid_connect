@@ -116,7 +116,7 @@ class OpenIDConnectLoginForm extends FormBase implements ContainerInjectionInter
     );
     $scopes = $this->claims->getScopes();
     $_SESSION['openid_connect_op'] = 'login';
-    $response = $client->authorize($scopes);
+    $response = $client->authorize($scopes, $form_state);
     $form_state->setResponse($response);
   }
 
