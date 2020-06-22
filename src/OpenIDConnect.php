@@ -181,7 +181,6 @@ class OpenIDConnect {
     ];
     $this->moduleHandler->alter('openid_connect_user_properties_ignore', $properties_ignore, $context);
     // Invoke deprecated hook with deprecation error message.
-    // @todo Remove in RC1.
     $this->moduleHandler->alterDeprecated('hook_openid_connect_user_properties_to_skip_alter() is deprecated and will be removed in 8.x-2.0.', 'openid_connect_user_properties_to_skip', $properties_ignore);
 
     $properties_ignore = array_unique($properties_ignore);
@@ -218,13 +217,78 @@ class OpenIDConnect {
   }
 
   /**
+   * Fill the context array.
+   *
+   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface $client
+   *   The client.
+   * @param array $tokens
+   *   The tokens as returned by OpenIDConnectClientInterface::retrieveTokens().
+   *
+   * @return array|bool
+   *   Context array or FALSE if an error was raised.
+   */
+  private function buildContext(OpenIDConnectClientInterface $client, array $tokens) {
+    $user_data = $client->decodeIdToken($tokens['id_token']);
+    $userinfo = $client->retrieveUserInfo($tokens['access_token']);
+    $provider = $client->getPluginId();
+
+    $context = [
+      'tokens' => $tokens,
+      'plugin_id' => $provider,
+      'user_data' => $user_data,
+    ];
+    $this->moduleHandler->alter('openid_connect_userinfo', $userinfo, $context);
+
+    if ($userinfo && empty($userinfo['email'])) {
+      $this->logger->error('No e-mail address provided by @provider (@code @error). Details: @details', ['@provider' => $provider]);
+      return FALSE;
+    }
+
+    $sub = $this->extractSub($user_data, $userinfo);
+    if (empty($sub)) {
+      $this->logger->error('No "sub" found from @provider (@code @error). Details: @details', ['@provider' => $provider]);
+      return FALSE;
+    }
+
+    /** @var \Drupal\user\UserInterface|bool $account */
+    $account = $this->authmap->userLoadBySub($sub, $provider);
+    $context = [
+      'tokens' => $tokens,
+      'plugin_id' => $provider,
+      'user_data' => $user_data,
+      'userinfo' => $userinfo,
+      'sub' => $sub,
+      'account' => $account,
+    ];
+    $results = $this->moduleHandler->invokeAll('openid_connect_pre_authorize', [
+      $account,
+      $context,
+    ]);
+
+    // Deny access if any module returns FALSE.
+    if (in_array(FALSE, $results, TRUE)) {
+      $this->logger->error('Login denied for @email via pre-authorize hook.', ['@email' => $userinfo['email']]);
+      return FALSE;
+    }
+
+    // If any module returns an account, set local $account to that.
+    foreach ($results as $result) {
+      if ($result instanceof UserInterface) {
+        $context['account'] = $result;
+        break;
+      }
+    }
+
+    return $context;
+  }
+
+  /**
    * Complete the authorization after tokens have been retrieved.
    *
    * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface $client
    *   The client.
    * @param array $tokens
-   *   The tokens as returned from
-   *   OpenIDConnectClientInterface::retrieveTokens().
+   *   The tokens as returned by OpenIDConnectClientInterface::retrieveTokens().
    * @param string|array $destination
    *   The path to redirect to after authorization.
    *
@@ -236,87 +300,31 @@ class OpenIDConnect {
       throw new \RuntimeException('User already logged in');
     }
 
-    $user_data = $client->decodeIdToken($tokens['id_token']);
-    $userinfo = $client->retrieveUserInfo($tokens['access_token']);
-
-    $context = [
-      'tokens' => $tokens,
-      'plugin_id' => $client->getPluginId(),
-      'user_data' => $user_data,
-    ];
-    $this->moduleHandler->alter('openid_connect_userinfo', $userinfo, $context);
-
-    if ($userinfo && empty($userinfo['email'])) {
-      $message = 'No e-mail address provided by @provider';
-      $variables = ['@provider' => $client->getPluginId()];
-      $this->logger->error($message . ' (@code @error). Details: @details', $variables);
+    $context = $this->buildContext($client, $tokens);
+    if ($context === FALSE) {
       return FALSE;
     }
 
-    $sub = $this->extractSub($user_data, $userinfo);
-    if (empty($sub)) {
-      $message = 'No "sub" found from @provider';
-      $variables = ['@provider' => $client->getPluginId()];
-      $this->logger->error($message . ' (@code @error). Details: @details', $variables);
-      return FALSE;
-    }
-
-    /** @var \Drupal\user\UserInterface|bool $account */
-    $account = $this->authmap->userLoadBySub($sub, $client->getPluginId());
-    $context = [
-      'tokens' => $tokens,
-      'plugin_id' => $client->getPluginId(),
-      'user_data' => $user_data,
-      'userinfo' => $userinfo,
-      'sub' => $sub,
-    ];
-    $results = $this->moduleHandler->invokeAll('openid_connect_pre_authorize', [
-      $account,
-      $context,
-    ]);
-
-    // Deny access if any module returns FALSE.
-    if (in_array(FALSE, $results, TRUE)) {
-      $message = 'Login denied for @email via pre-authorize hook.';
-      $variables = ['@email' => $userinfo['email']];
-      $this->logger->error($message, $variables);
-      return FALSE;
-    }
-
-    // If any module returns an account, set local $account to that.
-    foreach ($results as $result) {
-      if ($result instanceof UserInterface) {
-        $account = $result;
-        break;
-      }
-    }
-
+    $account = $context['account'];
     if ($account !== FALSE) {
       // An existing account was found. Save user claims.
       if ($this->configFactory->get('openid_connect.settings')->get('always_save_userinfo')) {
-        $context = [
-          'tokens' => $tokens,
-          'plugin_id' => $client->getPluginId(),
-          'user_data' => $user_data,
-          'userinfo' => $userinfo,
-          'sub' => $sub,
-          'is_new' => FALSE,
-        ];
-        $this->saveUserinfo($account, $context);
+        $this->saveUserinfo($account, $context + ['is_new' => FALSE]);
       }
     }
     else {
       // Check whether the e-mail address is valid.
-      if (!$this->emailValidator->isValid($userinfo['email'])) {
+      $email = $context['userinfo']['email'];
+      if (!$this->emailValidator->isValid($email)) {
         $this->messenger->addError($this->t('The e-mail address is not valid: @email', [
-          '@email' => $userinfo['email'],
+          '@email' => $email,
         ]));
         return FALSE;
       }
 
       // Check whether there is an e-mail address conflict.
       $accounts = $this->userStorage->loadByProperties([
-        'mail' => $userinfo['email'],
+        'mail' => $email,
       ]);
       if ($accounts) {
         /** @var \Drupal\user\UserInterface|bool $account */
@@ -325,11 +333,11 @@ class OpenIDConnect {
           ->get('connect_existing_users');
         if ($connect_existing_users) {
           // Connect existing user account with this sub.
-          $this->authmap->createAssociation($account, $client->getPluginId(), $sub);
+          $this->authmap->createAssociation($account, $client->getPluginId(), $context['sub']);
         }
         else {
           $this->messenger->addError($this->t('The e-mail address is already taken: @email', [
-            '@email' => $userinfo['email'],
+            '@email' => $email,
           ]));
           return FALSE;
         }
@@ -355,28 +363,20 @@ class OpenIDConnect {
           case UserInterface::REGISTER_VISITORS:
             // Create a new account if register settings is set to visitors or
             // override is active.
-            $account = $this->createUser($sub, $userinfo, $client->getPluginId(), 1);
+            $account = $this->createUser($context['sub'], $context['userinfo'], $client->getPluginId(), 1);
             break;
 
           case UserInterface::REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL:
             // Create a new account and inform the user of the pending approval.
-            $account = $this->createUser($sub, $userinfo, $client->getPluginId(), 0);
+            $account = $this->createUser($context['sub'], $context['userinfo'], $client->getPluginId(), 0);
             $this->messenger->addMessage($this->t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.'));
             break;
         }
       }
 
       // Store the newly created account.
-      $context = [
-        'tokens' => $tokens,
-        'plugin_id' => $client->getPluginId(),
-        'user_data' => $user_data,
-        'userinfo' => $userinfo,
-        'sub' => $sub,
-        'is_new' => TRUE,
-      ];
-      $this->saveUserinfo($account, $context);
-      $this->authmap->createAssociation($account, $client->getPluginId(), $sub);
+      $this->saveUserinfo($account, $context + ['is_new' => TRUE]);
+      $this->authmap->createAssociation($account, $client->getPluginId(), $context['sub']);
     }
 
     // Whether the user should not be logged in due to pending administrator
@@ -392,13 +392,6 @@ class OpenIDConnect {
 
     $this->loginUser($account);
 
-    $context = [
-      'tokens' => $tokens,
-      'plugin_id' => $client->getPluginId(),
-      'user_data' => $user_data,
-      'userinfo' => $userinfo,
-      'sub' => $sub,
-    ];
     $this->moduleHandler->invokeAll(
       'openid_connect_post_authorize',
       [
@@ -427,94 +420,27 @@ class OpenIDConnect {
       throw new \RuntimeException('User not logged in');
     }
 
-    $user_data = $client->decodeIdToken($tokens['id_token']);
-    $userinfo = $client->retrieveUserInfo($tokens['access_token']);
-
-    $context = [
-      'tokens' => $tokens,
-      'plugin_id' => $client->getPluginId(),
-      'user_data' => $user_data,
-    ];
-    $this->moduleHandler->alter('openid_connect_userinfo', $userinfo, $context);
-
-    $provider_param = [
-      '@provider' => $client->getPluginId(),
-    ];
-
-    if ($userinfo && empty($userinfo['email'])) {
-      $message = 'No e-mail address provided by @provider';
-      $variables = $provider_param;
-      $this->logger->error($message . ' (@code @error). Details: @details', $variables);
+    $context = $this->buildContext($client, $tokens);
+    if ($context === FALSE) {
       return FALSE;
     }
 
-    $sub = $this->extractSub($user_data, $userinfo);
-    if (empty($sub)) {
-      $message = 'No "sub" found from @provider';
-      $variables = $provider_param;
-      $this->logger->error($message . ' (@code @error). Details: @details', $variables);
-      return FALSE;
-    }
-
-    /** @var \Drupal\user\UserInterface|bool $account */
-    $account = $this->authmap->userLoadBySub($sub, $client->getPluginId());
-    $context = [
-      'tokens' => $tokens,
-      'plugin_id' => $client->getPluginId(),
-      'user_data' => $user_data,
-      'userinfo' => $userinfo,
-      'sub' => $sub,
-    ];
-    $results = $this->moduleHandler->invokeAll('openid_connect_pre_authorize', [
-      $account,
-      $context,
-    ]);
-
-    // Deny access if any module returns FALSE.
-    if (in_array(FALSE, $results, TRUE)) {
-      $message = 'Login denied for @email via pre-authorize hook.';
-      $variables = ['@email' => $userinfo['email']];
-      $this->logger->error($message, $variables);
-      return FALSE;
-    }
-
-    // If any module returns an account, set local $account to that.
-    foreach ($results as $result) {
-      if ($result instanceof UserInterface) {
-        $account = $result;
-        break;
-      }
-    }
-
+    $account = $context['account'];
     if ($account !== FALSE && $account->id() !== $this->currentUser->id()) {
-      $this->messenger->addError($this->t('Another user is already connected to this @provider account.', $provider_param));
+      $this->messenger->addError($this->t('Another user is already connected to this @provider account.', ['@provider' => $client->getPluginId()]));
       return FALSE;
     }
 
     if ($account === FALSE) {
       $account = $this->userStorage->load($this->currentUser->id());
-      $this->authmap->createAssociation($account, $client->getPluginId(), $sub);
+      $this->authmap->createAssociation($account, $client->getPluginId(), $context['sub']);
     }
 
     $always_save_userinfo = $this->configFactory->get('openid_connect.settings')->get('always_save_userinfo');
     if ($always_save_userinfo) {
-      $context = [
-        'tokens' => $tokens,
-        'plugin_id' => $client->getPluginId(),
-        'user_data' => $user_data,
-        'userinfo' => $userinfo,
-        'sub' => $sub,
-      ];
       $this->saveUserinfo($account, $context);
     }
 
-    $context = [
-      'tokens' => $tokens,
-      'plugin_id' => $client->getPluginId(),
-      'user_data' => $user_data,
-      'userinfo' => $userinfo,
-      'sub' => $sub,
-    ];
     $this->moduleHandler->invokeAll(
       'openid_connect_post_authorize',
       [
