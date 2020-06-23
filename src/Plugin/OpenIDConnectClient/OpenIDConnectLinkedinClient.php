@@ -54,7 +54,7 @@ class OpenIDConnectLinkedinClient extends OpenIDConnectClientBase {
    * {@inheritdoc}
    */
   public function decodeIdToken($id_token) {
-    return NULL;
+    return [];
   }
 
   /**

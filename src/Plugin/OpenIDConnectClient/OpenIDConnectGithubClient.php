@@ -72,7 +72,7 @@ class OpenIDConnectGithubClient extends OpenIDConnectClientBase {
    * {@inheritdoc}
    */
   public function decodeIdToken($id_token) {
-    return NULL;
+    return [];
   }
 
   /**
@@ -112,7 +112,7 @@ class OpenIDConnectGithubClient extends OpenIDConnectClientBase {
       // chosen to display it publicly. So we need to make another request to
       // find out the user's email address(es).
       if (empty($claims['email'])) {
-        $email_response = $client->get($endpoints['github_user'] . '/emails', $request_options);
+        $email_response = $client->get($endpoints['userinfo'] . '/emails', $request_options);
         $email_response_data = json_decode((string) $email_response->getBody(), TRUE);
 
         foreach ($email_response_data as $email) {
