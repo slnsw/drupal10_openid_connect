@@ -202,16 +202,15 @@ class OpenIDConnect {
    *   The sub, or FALSE if there was an error.
    */
   public function extractSub(array $user_data, array $userinfo) {
-    if (!isset($user_data['sub']) && !isset($userinfo['sub'])) {
-      return FALSE;
+    if (isset($user_data['sub'])) {
+      // If we have sub in both $user_data and $userinfo, return FALSE if they
+      // differ. Otherwise return the one in $user_data.
+      return (!isset($userinfo['sub']) || ($user_data['sub'] == $userinfo['sub'])) ? $user_data['sub'] : FALSE;
     }
-    elseif (!isset($user_data['sub'])) {
-      return $userinfo['sub'];
+    else {
+      // No sub in $user_data, return from $userinfo if it exists.
+      return (isset($userinfo['sub'])) ? $userinfo['sub'] : FALSE;
     }
-    elseif (isset($userinfo['sub']) && $user_data['sub'] != $userinfo['sub']) {
-      return FALSE;
-    }
-    return $user_data['sub'];
   }
 
   /**
