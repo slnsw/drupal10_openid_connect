@@ -24,7 +24,7 @@ class OpenIDConnectFacebookClient extends OpenIDConnectClientBase {
    * @var array
    */
   protected $versions = [
-    'v2.11', 'v2.10', 'v2.9', 'v2.8', 'v2.7', 'v2.6', 'v2.5', 'v2.4', 'v2.3',
+    'v2.12', 'v2.11', 'v2.10', 'v2.9', 'v2.8', 'v2.7', 'v2.6', 'v2.5', 'v2.4', 'v2.3',
   ];
 
   /**
@@ -33,8 +33,7 @@ class OpenIDConnectFacebookClient extends OpenIDConnectClientBase {
    * @var array
    */
   protected $fields = [
-    'id', 'name', 'email', 'first_name', 'last_name', 'gender', 'locale',
-    'timezone', 'picture',
+    'id', 'name', 'email', 'first_name', 'last_name', 'gender', 'locale', 'timezone', 'picture',
   ];
 
   /**

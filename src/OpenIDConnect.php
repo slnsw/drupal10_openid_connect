@@ -236,6 +236,12 @@ class OpenIDConnect {
     ];
     $this->moduleHandler->alter('openid_connect_userinfo', $userinfo, $context);
 
+    // Whether we have no usable user information.
+    if (empty($user_data) && empty($userinfo)) {
+      $this->logger->error('No user information provided by @provider (@code @error). Details: @details', ['@provider' => $provider]);
+      return FALSE;
+    }
+
     if ($userinfo && empty($userinfo['email'])) {
       $this->logger->error('No e-mail address provided by @provider (@code @error). Details: @details', ['@provider' => $provider]);
       return FALSE;
