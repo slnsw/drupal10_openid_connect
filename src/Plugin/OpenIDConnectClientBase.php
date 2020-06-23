@@ -227,13 +227,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::authorize().
-   *
-   * @param string $scope
-   *   A string of scopes.
-   *
-   * @return \Drupal\Core\Routing\TrustedRedirectResponse
-   *   A trusted redirect response object.
+   * {@inheritdoc}
    */
   public function authorize($scope = 'openid email') {
     $redirect_uri = $this->getRedirectUrl()->toString(TRUE);
@@ -277,13 +271,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::retrieveIDToken().
-   *
-   * @param string $authorization_code
-   *   A authorization code string.
-   *
-   * @return array|bool
-   *   A result array or false.
+   * {@inheritdoc}
    */
   public function retrieveTokens($authorization_code) {
     // Exchange `code` for access token and ID token.
@@ -333,7 +321,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::decodeIdToken().
+   * {@inheritdoc}
    */
   public function decodeIdToken($id_token) {
     /* @noinspection PhpUnusedLocalVariableInspection */
@@ -344,13 +332,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::retrieveUserInfo().
-   *
-   * @param string $access_token
-   *   An access token string.
-   *
-   * @return array|bool
-   *   A result array or false.
+   * {@inheritdoc}
    */
   public function retrieveUserInfo($access_token) {
     $request_options = [

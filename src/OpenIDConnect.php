@@ -194,11 +194,9 @@ class OpenIDConnect {
    * identify the user.
    *
    * @param array $user_data
-   *   The user data as returned from
-   *   OpenIDConnectClientInterface::decodeIdToken().
+   *   The user data from OpenIDConnectClientInterface::decodeIdToken().
    * @param array $userinfo
-   *   The user claims as returned from
-   *   OpenIDConnectClientInterface::retrieveUserInfo().
+   *   The user claims from OpenIDConnectClientInterface::retrieveUserInfo().
    *
    * @return string|false
    *   The sub, or FALSE if there was an error.

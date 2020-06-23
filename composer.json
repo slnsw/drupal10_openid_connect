@@ -10,5 +10,7 @@
     "issues": "https://www.drupal.org/project/issues/openid_connect",
     "source": "https://git.drupalcode.org/project/openid_connect"
   },
-  "require": {}
+  "require": {
+    "ext-json": "*"
+  }
 }
