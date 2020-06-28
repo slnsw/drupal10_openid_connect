@@ -50,14 +50,17 @@ class OpenIDConnectAuthmap {
    *   The remote subject identifier.
    */
   public function createAssociation($account, $client_name, $sub) {
-    $fields = [
-      'uid' => $account->id(),
-      'client_name' => $client_name,
-      'sub' => $sub,
-    ];
-    $this->connection->insert('openid_connect_authmap')
-      ->fields($fields)
-      ->execute();
+    $existing_accounts = $this->getConnectedAccounts($account, $client_name);
+    // Only create record if association to account doesn't exist yet.
+    if (!isset($existing_accounts[$client_name]) || $existing_accounts[$client_name] !== $sub) {
+      $this->connection->insert('openid_connect_authmap')
+        ->fields([
+          'uid' => $account->id(),
+          'client_name' => $client_name,
+          'sub' => $sub,
+        ])
+        ->execute();
+    }
   }
 
   /**
@@ -109,15 +112,21 @@ class OpenIDConnectAuthmap {
    *
    * @param object $account
    *   A Drupal user entity.
+   * @param string $client_name
+   *   An optional client name.
    *
    * @return array
    *   An array of 'sub' properties keyed by the client name.
    */
-  public function getConnectedAccounts($account) {
-    $result = $this->connection->select('openid_connect_authmap', 'a')
+  public function getConnectedAccounts($account, $client_name = '') {
+    $query = $this->connection->select('openid_connect_authmap', 'a')
       ->fields('a', ['client_name', 'sub'])
-      ->condition('uid', $account->id())
-      ->execute();
+      ->condition('uid', $account->id());
+    if (!empty($client_name)) {
+      $query->condition('client_name', $client_name, '=');
+    }
+
+    $result = $query->execute();
     $authmaps = [];
     foreach ($result as $record) {
       $client = $record->client_name;
