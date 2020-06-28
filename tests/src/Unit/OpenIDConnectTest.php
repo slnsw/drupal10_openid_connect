@@ -566,7 +566,6 @@ class OpenIDConnectTest extends UnitTestCase {
     bool $preAuthorize,
     bool $accountExists
   ): void {
-
     $clientPluginId = $this->randomMachineName();
 
     $this->currentUser->expects($this->once())
@@ -627,17 +626,15 @@ class OpenIDConnectTest extends UnitTestCase {
           );
 
         if (empty($userData) && empty($userInfo)) {
-
           $this->oidcLogger->expects($this->once())
             ->method('error')
             ->with(
-              'No "sub" found from @provider (@code @error). Details: @details',
+              'No user information provided by @provider (@code @error). Details: @details',
               ['@provider' => $clientPluginId]
             );
         }
 
         if (!empty($userInfo) && empty($userInfo['email'])) {
-
           $this->oidcLogger->expects($this->once())
             ->method('error')
             ->with(
@@ -669,7 +666,6 @@ class OpenIDConnectTest extends UnitTestCase {
             );
 
           if ($preAuthorize) {
-
             $this->entityFieldManager->expects($this->once())
               ->method('getFieldDefinitions')
               ->with('user', 'user')
@@ -1152,7 +1148,7 @@ class OpenIDConnectTest extends UnitTestCase {
         $this->oidcLogger->expects($this->once())
           ->method('error')
           ->with(
-            'No "sub" found from @provider (@code @error). Details: @details',
+            'No user information provided by @provider (@code @error). Details: @details',
             ['@provider' => $pluginId]
           );
       }
