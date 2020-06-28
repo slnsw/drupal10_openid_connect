@@ -181,7 +181,7 @@ class OpenIDConnect {
     ];
     $this->moduleHandler->alter('openid_connect_user_properties_ignore', $properties_ignore, $context);
     // Invoke deprecated hook with deprecation error message.
-    $this->moduleHandler->alterDeprecated('hook_openid_connect_user_properties_to_skip_alter() is deprecated and will be removed in 8.x-2.0.', 'openid_connect_user_properties_to_skip', $properties_ignore);
+    $this->moduleHandler->alterDeprecated('hook_openid_connect_user_properties_to_skip_alter() is deprecated and will be removed in 8.x-2.0.', 'openid_connect_user_properties_to_skip', $properties_ignore, $context);
 
     $properties_ignore = array_unique($properties_ignore);
     return array_combine($properties_ignore, $properties_ignore);
@@ -678,6 +678,10 @@ class OpenIDConnect {
     }
 
     // Allow other modules to add additional user information.
+    $this->moduleHandler->invokeAllDeprecated('openid_connect_save_userinfo() is deprecated and will be removed in 8.x-2.0.', 'openid_connect_save_userinfo', [
+      $account,
+      $context,
+    ]);
     $this->moduleHandler->invokeAll('openid_connect_userinfo_save', [
       $account,
       $context,
