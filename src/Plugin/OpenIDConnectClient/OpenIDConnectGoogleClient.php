@@ -35,9 +35,10 @@ class OpenIDConnectGoogleClient extends OpenIDConnectClientBase {
    * {@inheritdoc}
    */
   public function getEndpoints() {
+    // Data from https://accounts.google.com/.well-known/openid-configuration
     return [
-      'authorization' => 'https://accounts.google.com/o/oauth2/auth',
-      'token' => 'https://accounts.google.com/o/oauth2/token',
+      'authorization' => 'https://accounts.google.com/o/oauth2/v2/auth',
+      'token' => 'https://oauth2.googleapis.com/token',
       'userinfo' => 'https://openidconnect.googleapis.com/v1/userinfo',
     ];
   }
