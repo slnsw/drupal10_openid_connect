@@ -34,9 +34,9 @@ class OpenIDConnectAuthmap {
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity manager.
    */
-  public function __construct(Connection $connection, EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(Connection $connection, EntityTypeManagerInterface $entity_type_manager = NULL) {
     $this->connection = $connection;
-    $this->userStorage = $entity_type_manager->getStorage('user');
+    $this->userStorage = $entity_type_manager ? $entity_type_manager->getStorage('user') : \Drupal::entityTypeManager()->getStorage('user');
   }
 
   /**
