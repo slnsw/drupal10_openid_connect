@@ -107,8 +107,7 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
       $container->get('openid_connect.authmap'),
       $container->get('openid_connect.claims'),
       $container->get('plugin.manager.openid_connect_client.processor'),
-      $container->get('config.factory'),
-      $container->get('messenger')
+      $container->get('config.factory')
     );
   }
 

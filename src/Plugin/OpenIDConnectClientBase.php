@@ -324,8 +324,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * {@inheritdoc}
    */
   public function decodeIdToken($id_token) {
-    /* @noinspection PhpUnusedLocalVariableInspection */
-    list($headerb64, $claims64, $signatureb64) = explode('.', $id_token);
+    list(, $claims64,) = explode('.', $id_token);
     $claims64 = str_replace(['-', '_'], ['+', '/'], $claims64);
     $claims64 = base64_decode($claims64);
     return json_decode($claims64, TRUE);

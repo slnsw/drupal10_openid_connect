@@ -9,11 +9,6 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\user\UserInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 
-const USER_REGISTER_ADMINISTRATORS_ONLY = 'admin_only';
-const USER_REGISTER_VISITORS = 'visitors';
-const USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL = 'visitors_admin_approval';
-const FILE_EXISTS_RENAME = FileSystemInterface::EXISTS_RENAME;
-
 /**
  * Override the user_password function if it does not exist.
  *
@@ -52,6 +47,5 @@ function file_save_data(
   $destination = NULL,
   $replace = FileSystemInterface::EXISTS_RENAME
 ): MockObject {
-
   return $GLOBALS['oldFileMock'];
 }
