@@ -165,6 +165,7 @@ function openid_connect_form_user_login_form_alter(&$form, FormStateInterface $f
           // Replace the user login form with the google domain login button.
           $form = $openid_form;
         }
+        $form['#cache']['contexts'][] = 'url.query_args:showcore';
         break;
     }
   }
