@@ -100,8 +100,8 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   public function access() {
     // Confirm anti-forgery state token. This round-trip verification helps to
     // ensure that the user, not a malicious script, is making the request.
-    $query = $this->requestStack->getCurrentRequest()->query;
-    $state_token = $query->get('state');
+    $request = $this->requestStack->getCurrentRequest();
+    $state_token = $request->get('state');
     if ($state_token && OpenIDConnectStateToken::confirm($state_token)) {
       return AccessResult::allowed();
     }
@@ -118,7 +118,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    *   The redirect response starting the authentication request.
    */
   public function authenticate($client_name) {
-    $query = $this->requestStack->getCurrentRequest()->query;
+    $request = $this->requestStack->getCurrentRequest();
 
     // Delete the state token, since it's already been confirmed.
     unset($_SESSION['openid_connect_state']);
@@ -143,7 +143,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
       $client_name,
       $configuration
     );
-    if (!$query->get('error') && (!($client instanceof OpenIDConnectClientInterface) || !$query->get('code'))) {
+    if (!$request->get('error') && (!($client instanceof OpenIDConnectClientInterface) || !$request->get('code'))) {
       // In case we don't have an error, but the client could not be loaded or
       // there is no state token specified, the URI is probably being visited
       // outside of the login flow.
@@ -152,8 +152,8 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
 
     $provider_param = ['@provider' => $client->getPluginDefinition()['label']];
 
-    if ($query->get('error')) {
-      if (in_array($query->get('error'), [
+    if ($request->get('error')) {
+      if (in_array($request->get('error'), [
         'interaction_required',
         'login_required',
         'account_selection_required',
@@ -166,8 +166,8 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
       else {
         // Any other error should be logged. E.g. invalid scope.
         $variables = [
-          '@error' => $query->get('error'),
-          '@details' => $query->get('error_description') ? $query->get('error_description') : $this->t('Unknown error.'),
+          '@error' => $request->get('error'),
+          '@details' => $request->get('error_description') ? $request->get('error_description') : $this->t('Unknown error.'),
         ];
         $message = 'Authorization failed: @error. Details: @details';
         $this->loggerFactory->get('openid_connect_' . $client_name)->error($message, $variables);
@@ -176,7 +176,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
     }
     else {
       // Process the login or connect operations.
-      $tokens = $client->retrieveTokens($query->get('code'));
+      $tokens = $client->retrieveTokens($request->get('code'));
       if ($tokens) {
         if ($parameters['op'] === 'login') {
           $success = $this->openIDConnect->completeAuthorization($client, $tokens, $destination);
