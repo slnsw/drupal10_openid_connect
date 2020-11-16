@@ -214,6 +214,9 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
           }
         }
       }
+      else {
+        $this->messenger()->addError($this->t('Failed to get authentication tokens for @provider. Check logs for further details.', $provider_param));
+      }
     }
 
     // It's possible to set 'options' in the redirect destination.
