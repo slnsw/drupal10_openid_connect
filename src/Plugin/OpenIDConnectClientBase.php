@@ -15,7 +15,6 @@ use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\openid_connect\OpenIDConnectStateToken;
-use Exception;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -309,7 +308,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       }
       return $tokens;
     }
-    catch (Exception $e) {
+    catch (\Exception $e) {
       $variables = [
         '@message' => 'Could not retrieve tokens',
         '@error_message' => $e->getMessage(),
@@ -349,7 +348,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
 
       return json_decode($response_data, TRUE);
     }
-    catch (Exception $e) {
+    catch (\Exception $e) {
       $variables = [
         '@message' => 'Could not retrieve user profile information',
         '@error_message' => $e->getMessage(),
