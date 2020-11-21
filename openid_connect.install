@@ -130,3 +130,19 @@ function openid_connect_update_8105() {
     $database->delete('openid_connect_authmap')->condition('aid', array_keys($aids), 'IN')->execute();
   }
 }
+
+/**
+ * Add default config for Okta provider.
+ */
+function openid_connect_update_8106() {
+  $config_factory = \Drupal::configFactory();
+
+  $config = $config_factory->getEditable('openid_connect.settings.okta');
+  $config->set('enabled', FALSE);
+  $config->set('settings', [
+    'client_id' => '',
+    'client_secret' => '',
+    'okta_domain' => '',
+  ]);
+  $config->save(TRUE);
+}
