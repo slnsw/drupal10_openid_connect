@@ -20,6 +20,15 @@ class OpenIDConnectOktaClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
+  public function defaultConfiguration() {
+    return [
+      'okta_domain' => '',
+    ] + parent::defaultConfiguration();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
 
