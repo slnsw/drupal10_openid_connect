@@ -271,14 +271,18 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   }
 
   /**
-   * {@inheritdoc}
+   * Helper function for request options.
+   *
+   * @param string $authorization_code
+   *   Authorization code received as a result of the the authorization request.
+   * @param string $redirect_uri
+   *   URI to redirect for authorization.
+   *
+   * @return array
+   *   Array with request options.
    */
-  public function retrieveTokens($authorization_code) {
-    // Exchange `code` for access token and ID token.
-    $redirect_uri = $this->getRedirectUrl()->toString();
-    $endpoints = $this->getEndpoints();
-
-    $request_options = [
+  protected function getRequestOptions($authorization_code, $redirect_uri) {
+    return [
       'form_params' => [
         'code' => $authorization_code,
         'client_id' => $this->configuration['client_id'],
@@ -290,6 +294,16 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
         'Accept' => 'application/json',
       ],
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function retrieveTokens($authorization_code) {
+    // Exchange `code` for access token and ID token.
+    $redirect_uri = $this->getRedirectUrl()->toString();
+    $endpoints = $this->getEndpoints();
+    $request_options = $this->getRequestOptions($authorization_code, $redirect_uri);
 
     $client = $this->httpClient;
     try {
