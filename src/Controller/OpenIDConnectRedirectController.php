@@ -6,12 +6,11 @@ use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Routing\Access\AccessInterface;
-use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
 use Drupal\openid_connect\OpenIDConnect;
-use Drupal\openid_connect\OpenIDConnectStateToken;
+use Drupal\openid_connect\OpenIDConnectStateTokenInterface;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -26,11 +25,18 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class OpenIDConnectRedirectController extends ControllerBase implements AccessInterface {
 
   /**
-   * Drupal\openid_connect\Plugin\OpenIDConnectClientManager definition.
+   * The OpenID client plugin manager.
    *
    * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
   protected $pluginManager;
+
+  /**
+   * The OpenID state token service.
+   *
+   * @var \Drupal\openid_connect\OpenIDConnectStateTokenInterface
+   */
+  protected $stateToken;
 
   /**
    * The request stack used to access request globals.
@@ -47,13 +53,6 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   protected $loggerFactory;
 
   /**
-   * Current user service.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected $currentUser;
-
-  /**
    * The OpenID Connect service.
    *
    * @var \Drupal\openid_connect\OpenIDConnect
@@ -61,20 +60,31 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   protected $openIDConnect;
 
   /**
-   * {@inheritdoc}
+   * The constructor.
+   *
+   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
+   *   The OpenID client plugin manager.
+   * @param \Drupal\openid_connect\OpenIDConnect $openid_connect
+   *   The OpenID Connect service.
+   * @param \Drupal\openid_connect\OpenIDConnectStateTokenInterface $state_token
+   *   The OpenID state token service.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The request stack.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger factory.
    */
   public function __construct(
     OpenIDConnectClientManager $plugin_manager,
     OpenIDConnect $openid_connect,
+    OpenIDConnectStateTokenInterface $state_token,
     RequestStack $request_stack,
-    LoggerChannelFactoryInterface $logger_factory,
-    AccountProxyInterface $current_user
+    LoggerChannelFactoryInterface $logger_factory
   ) {
     $this->pluginManager = $plugin_manager;
     $this->openIDConnect = $openid_connect;
+    $this->stateToken = $state_token;
     $this->requestStack = $request_stack;
     $this->loggerFactory = $logger_factory;
-    $this->currentUser = $current_user;
   }
 
   /**
@@ -84,9 +94,9 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
     return new static(
       $container->get('plugin.manager.openid_connect_client.processor'),
       $container->get('openid_connect.openid_connect'),
+      $container->get('openid_connect.state_token'),
       $container->get('request_stack'),
-      $container->get('logger.factory'),
-      $container->get('current_user')
+      $container->get('logger.factory')
     );
   }
 
@@ -102,7 +112,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
     // ensure that the user, not a malicious script, is making the request.
     $request = $this->requestStack->getCurrentRequest();
     $state_token = $request->get('state');
-    if ($state_token && OpenIDConnectStateToken::confirm($state_token)) {
+    if ($state_token && $this->stateToken->confirm($state_token)) {
       return AccessResult::allowed();
     }
     return AccessResult::forbidden();
@@ -204,7 +214,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
             }
           }
         }
-        elseif ($parameters['op'] === 'connect' && $parameters['connect_uid'] === $this->currentUser->id()) {
+        elseif ($parameters['op'] === 'connect' && $parameters['connect_uid'] === $this->currentUser()->id()) {
           $success = $this->openIDConnect->connectCurrentUser($client, $tokens);
           if ($success) {
             $this->messenger()->addMessage($this->t('Account successfully connected with @provider.', $provider_param));

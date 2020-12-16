@@ -14,7 +14,7 @@ use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
-use Drupal\openid_connect\OpenIDConnectStateToken;
+use Drupal\openid_connect\OpenIDConnectStateTokenInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -70,6 +70,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   protected $languageManager;
 
   /**
+   * The OpenID state token service.
+   *
+   * @var \Drupal\openid_connect\OpenIDConnectStateTokenInterface
+   */
+  protected $stateToken;
+
+  /**
    * The constructor.
    *
    * @param array $configuration
@@ -90,6 +97,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    *   Policy evaluating to static::DENY when the kill switch was triggered.
    * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
    *   The language manager.
+   * @param \Drupal\openid_connect\OpenIDConnectStateTokenInterface $state_token
+   *   The OpenID state token service.
    */
   public function __construct(
       array $configuration,
@@ -98,15 +107,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       RequestStack $request_stack,
       ClientInterface $http_client,
       LoggerChannelFactoryInterface $logger_factory,
+      // @todo Remove the NULLs in version 2.0 of the module.
       TimeInterface $datetime_time = NULL,
       KillSwitch $page_cache_kill_switch = NULL,
-      LanguageManagerInterface $language_manager = NULL
+      LanguageManagerInterface $language_manager = NULL,
+      OpenIDConnectStateTokenInterface $state_token = NULL
   ) {
-    parent::__construct(
-      $configuration,
-      $plugin_id,
-      $plugin_definition
-    );
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->requestStack = $request_stack;
     $this->httpClient = $http_client;
@@ -114,6 +121,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $this->dateTime = $datetime_time ?: \Drupal::time();
     $this->pageCacheKillSwitch = $page_cache_kill_switch ?: \Drupal::service('page_cache_kill_switch');
     $this->languageManager = $language_manager ?: \Drupal::languageManager();
+    $this->stateToken = $state_token ?: \Drupal::service('openid_connect.state_token');
     $this->setConfiguration($configuration);
   }
 
@@ -135,7 +143,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $container->get('logger.factory'),
       $container->get('datetime.time'),
       $container->get('page_cache_kill_switch'),
-      $container->get('language_manager')
+      $container->get('language_manager'),
+      $container->get('openid_connect.state_token')
     );
   }
 
@@ -265,7 +274,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
         'response_type' => 'code',
         'scope' => $scope,
         'redirect_uri' => $redirect_uri->getGeneratedUrl(),
-        'state' => OpenIDConnectStateToken::create(),
+        'state' => $this->stateToken->create(),
       ],
     ];
   }
