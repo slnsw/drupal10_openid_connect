@@ -16,6 +16,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\openid_connect\OpenIDConnectStateToken;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\Component\Datetime\TimeInterface;
@@ -313,6 +314,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
         '@message' => 'Could not retrieve tokens',
         '@error_message' => $e->getMessage(),
       ];
+
+      if ($e instanceof RequestException && $e->hasResponse()) {
+        $response_body = $e->getResponse()->getBody()->getContents();
+        $variables['@error_message'] .= ' Response: ' . $response_body;
+      }
+
       $this->loggerFactory->get('openid_connect_' . $this->pluginId)
         ->error('@message. Details: @error_message', $variables);
       return FALSE;
@@ -353,6 +360,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
         '@message' => 'Could not retrieve user profile information',
         '@error_message' => $e->getMessage(),
       ];
+
+      if ($e instanceof RequestException && $e->hasResponse()) {
+        $response_body = $e->getResponse()->getBody()->getContents();
+        $variables['@error_message'] .= ' Response: ' . $response_body;
+      }
+
       $this->loggerFactory->get('openid_connect_' . $this->pluginId)
         ->error('@message. Details: @error_message', $variables);
       return FALSE;
