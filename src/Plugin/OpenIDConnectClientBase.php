@@ -42,6 +42,15 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   protected $httpClient;
 
   /**
+   * The minimum set of scopes for this client.
+   *
+   * @var string[]|null
+   *
+   * @see \Drupal\openid_connect\OpenIDConnectClaims::getScopes()
+   */
+  protected $clientScopes = ['openid', 'email'];
+
+  /**
    * The logger factory used for logging.
    *
    * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
@@ -203,6 +212,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       '#default_value' => $this->configuration['client_secret'],
     ];
     return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getClientScopes() {
+    return $this->clientScopes;
   }
 
   /**
