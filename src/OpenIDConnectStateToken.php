@@ -12,9 +12,9 @@ use Drupal\Component\Utility\Crypt;
 class OpenIDConnectStateToken implements OpenIDConnectStateTokenInterface {
 
   /**
-    * {@inheritdoc}
+   * {@inheritdoc}
    */
-  public function create() {
+  public static function create() {
     $state = Crypt::randomBytesBase64();
     $_SESSION['openid_connect_state'] = $state;
     return $state;
@@ -23,7 +23,7 @@ class OpenIDConnectStateToken implements OpenIDConnectStateTokenInterface {
   /**
    * {@inheritdoc}
    */
-  public function confirm($state_token) {
+  public static function confirm($state_token) {
     return isset($_SESSION['openid_connect_state']) &&
       $state_token == $_SESSION['openid_connect_state'];
   }
