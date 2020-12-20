@@ -4,7 +4,6 @@ namespace Drupal\openid_connect;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\user\Entity\User;
 
 /**
  * The OpenID Connect authmap service.
@@ -94,8 +93,8 @@ class OpenIDConnectAuthmap {
    * @param string $client_name
    *   The client name.
    *
-   * @return object|null
-   *   A user account object or null.
+   * @return object|bool
+   *   A user account object or FALSE.
    */
   public function userLoadBySub(string $sub, string $client_name) {
     $result = $this->connection->select('openid_connect_authmap', 'a')
@@ -110,7 +109,7 @@ class OpenIDConnectAuthmap {
         return $account;
       }
     }
-    return NULL;
+    return FALSE;
   }
 
   /**

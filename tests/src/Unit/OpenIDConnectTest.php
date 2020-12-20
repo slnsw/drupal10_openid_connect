@@ -681,9 +681,11 @@ class OpenIDConnectTest extends UnitTestCase {
         }
       }
       else {
+        $account = FALSE;
+
         $this->authMap->expects($this->once())
           ->method('userLoadBySub')
-          ->willReturn(NULL);
+          ->willReturn($account);
 
         $this->moduleHandler->expects($this->any())
           ->method('invokeAll')
@@ -1202,7 +1204,7 @@ class OpenIDConnectTest extends UnitTestCase {
 
         $this->authMap->expects($this->once())
           ->method('userLoadBySub')
-          ->willReturn(NULL);
+          ->willReturn(FALSE);
 
         $mappings = [
           'mail' => 'mail',
