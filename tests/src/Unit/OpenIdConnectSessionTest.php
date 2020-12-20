@@ -89,7 +89,7 @@ class OpenIdConnectSessionTest extends UnitTestCase {
     $session->saveDestination();
 
     // Assert the $_SESSOIN global matches our expectation.
-    $this->assertArrayEquals($expectedSession, $_SESSION);
+    $this->assertEquals($expectedSession, $_SESSION);
   }
 
   /**
@@ -114,7 +114,7 @@ class OpenIdConnectSessionTest extends UnitTestCase {
     $session->saveDestination();
 
     // Assert the $_SESSION matches our expectations.
-    $this->assertArrayEquals($expectedSession, $_SESSION);
+    $this->assertEquals($expectedSession, $_SESSION);
   }
 
   /**

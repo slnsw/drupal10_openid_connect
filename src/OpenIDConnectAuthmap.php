@@ -31,8 +31,11 @@ class OpenIDConnectAuthmap {
    *
    * @param \Drupal\Core\Database\Connection $connection
    *   A database connection.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface|null $entity_type_manager
    *   The entity manager.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function __construct(Connection $connection, EntityTypeManagerInterface $entity_type_manager = NULL) {
     $this->connection = $connection;
@@ -48,6 +51,8 @@ class OpenIDConnectAuthmap {
    *   The client name.
    * @param string $sub
    *   The remote subject identifier.
+   *
+   * @throws \Exception
    */
   public function createAssociation($account, $client_name, $sub) {
     $existing_accounts = $this->getConnectedAccounts($account, $client_name);
@@ -75,7 +80,7 @@ class OpenIDConnectAuthmap {
     $query = $this->connection->delete('openid_connect_authmap')
       ->condition('uid', $uid);
     if (!empty($client_name)) {
-      $query->condition('client_name', $client_name, '=');
+      $query->condition('client_name', $client_name);
     }
     $query->execute();
   }
@@ -94,8 +99,8 @@ class OpenIDConnectAuthmap {
   public function userLoadBySub($sub, $client_name) {
     $result = $this->connection->select('openid_connect_authmap', 'a')
       ->fields('a', ['uid'])
-      ->condition('client_name', $client_name, '=')
-      ->condition('sub', $sub, '=')
+      ->condition('client_name', $client_name)
+      ->condition('sub', $sub)
       ->execute();
     foreach ($result as $record) {
       /** @var \Drupal\user\Entity\User $account */
@@ -123,7 +128,7 @@ class OpenIDConnectAuthmap {
       ->fields('a', ['client_name', 'sub'])
       ->condition('uid', $account->id());
     if (!empty($client_name)) {
-      $query->condition('client_name', $client_name, '=');
+      $query->condition('client_name', $client_name);
     }
 
     $result = $query->execute();

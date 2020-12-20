@@ -3,6 +3,7 @@
 namespace Drupal\openid_connect;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Extension\ModuleHandler;
@@ -125,6 +126,9 @@ class OpenIDConnect {
    *   A logger channel factory instance.
    * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The file system service.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
@@ -159,6 +163,9 @@ class OpenIDConnect {
    *   Optional: Array with context information, if this function is called
    *   within the context of user authorization.
    *   Defaults to an empty array.
+   *
+   * @return array
+   *   User properties to ignore.
    */
   public function userPropertiesIgnore(array $context = []) {
     $properties_ignore = [
@@ -295,6 +302,8 @@ class OpenIDConnect {
    *
    * @return bool
    *   TRUE on success, FALSE on failure.
+   *
+   * @throws \Exception
    */
   public function completeAuthorization(OpenIDConnectClientInterface $client, array $tokens, &$destination) {
     if ($this->currentUser->isAuthenticated()) {
@@ -414,6 +423,8 @@ class OpenIDConnect {
    *
    * @return bool
    *   TRUE on success, FALSE on failure.
+   *
+   * @throws \Exception
    */
   public function connectCurrentUser(OpenIDConnectClientInterface $client, array $tokens) {
     if (!$this->currentUser->isAuthenticated()) {
@@ -455,7 +466,7 @@ class OpenIDConnect {
   /**
    * Find whether a user is allowed to change the own password.
    *
-   * @param \Drupal\Core\Session\AccountInterface $account
+   * @param \Drupal\Core\Session\AccountInterface|null $account
    *   Optional: Account to check the access for.
    *   Defaults to the currently logged-in user.
    *
@@ -488,8 +499,8 @@ class OpenIDConnect {
    * @param int $status
    *   The initial user status.
    *
-   * @return \Drupal\user\UserInterface|false
-   *   The user object or FALSE on failure.
+   * @return \Drupal\user\UserInterface|null
+   *   The user object or null on failure.
    */
   public function createUser($sub, array $userinfo, $client_name, $status = 1) {
     /** @var \Drupal\user\UserInterface $account */
@@ -502,9 +513,13 @@ class OpenIDConnect {
       'openid_connect_client' => $client_name,
       'openid_connect_sub' => $sub,
     ]);
-    $account->save();
-
-    return $account;
+    try {
+      $account->save();
+      return $account;
+    }
+    catch (EntityStorageException $e) {
+      return NULL;
+    }
   }
 
   /**
@@ -577,6 +592,9 @@ class OpenIDConnect {
    *   - userinfo:       An array of user information.
    *   - plugin_id:      The plugin identifier.
    *   - sub:            The remote user identifier.
+   *
+   * @return bool
+   *   Whether the user info was successfully saved.
    */
   public function saveUserinfo(UserInterface $account, array $context) {
     $userinfo = $context['userinfo'];
@@ -681,7 +699,13 @@ class OpenIDConnect {
       $context,
     ]);
 
-    $account->save();
+    try {
+      $account->save();
+      return TRUE;
+    }
+    catch (EntityStorageException $e) {
+      return FALSE;
+    }
   }
 
 }

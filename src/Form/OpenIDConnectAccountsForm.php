@@ -206,14 +206,11 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
     $configuration = $this->config('openid_connect.settings.' . $client_name)
       ->get('settings');
     /** @var \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface $client */
-    $client = $this->pluginManager->createInstance(
-      $client_name,
-      $configuration
-    );
+    $client = $this->pluginManager->createInstance($client_name, $configuration);
     $scopes = $this->claims->getScopes($client);
     $_SESSION['openid_connect_op'] = $op;
     $_SESSION['openid_connect_connect_uid'] = $this->currentUser->id();
-    $response = $client->authorize($scopes, $form_state);
+    $response = $client->authorize($scopes);
     $form_state->setResponse($response);
   }
 

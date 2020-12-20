@@ -338,7 +338,7 @@ class OpenIDConnectAuthmapTest extends UnitTestCase {
         $record->client_name => $record->sub,
       ];
 
-      $this->assertArrayEquals($expected, $actualResult);
+      $this->assertEquals($expected, $actualResult);
     }
     else {
       $this->assertEmpty($actualResult);

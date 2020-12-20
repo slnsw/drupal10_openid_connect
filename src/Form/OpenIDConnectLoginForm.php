@@ -110,13 +110,10 @@ class OpenIDConnectLoginForm extends FormBase implements ContainerInjectionInter
     $configuration = $this->config('openid_connect.settings.' . $client_name)
       ->get('settings');
     /** @var \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface $client */
-    $client = $this->pluginManager->createInstance(
-      $client_name,
-      $configuration
-    );
+    $client = $this->pluginManager->createInstance($client_name, $configuration);
     $scopes = $this->claims->getScopes($client);
     $_SESSION['openid_connect_op'] = 'login';
-    $response = $client->authorize($scopes, $form_state);
+    $response = $client->authorize($scopes);
     $form_state->setResponse($response);
   }
 

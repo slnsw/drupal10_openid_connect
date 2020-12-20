@@ -116,21 +116,20 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       RequestStack $request_stack,
       ClientInterface $http_client,
       LoggerChannelFactoryInterface $logger_factory,
-      // @todo Remove the NULLs in version 2.0 of the module.
-      TimeInterface $datetime_time = NULL,
-      KillSwitch $page_cache_kill_switch = NULL,
-      LanguageManagerInterface $language_manager = NULL,
-      OpenIDConnectStateTokenInterface $state_token = NULL
+      TimeInterface $datetime_time,
+      KillSwitch $page_cache_kill_switch,
+      LanguageManagerInterface $language_manager,
+      OpenIDConnectStateTokenInterface $state_token
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->requestStack = $request_stack;
     $this->httpClient = $http_client;
     $this->loggerFactory = $logger_factory;
-    $this->dateTime = $datetime_time ?: \Drupal::time();
-    $this->pageCacheKillSwitch = $page_cache_kill_switch ?: \Drupal::service('page_cache_kill_switch');
-    $this->languageManager = $language_manager ?: \Drupal::languageManager();
-    $this->stateToken = $state_token ?: \Drupal::service('openid_connect.state_token');
+    $this->dateTime = $datetime_time;
+    $this->pageCacheKillSwitch = $page_cache_kill_switch;
+    $this->languageManager = $language_manager;
+    $this->stateToken = $state_token;
     $this->setConfiguration($configuration);
   }
 

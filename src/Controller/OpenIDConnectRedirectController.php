@@ -126,6 +126,9 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    *
    * @return \Symfony\Component\HttpFoundation\RedirectResponse
    *   The redirect response starting the authentication request.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   * @throws \Exception
    */
   public function authenticate($client_name) {
     $request = $this->requestStack->getCurrentRequest();

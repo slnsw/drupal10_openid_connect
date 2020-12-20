@@ -32,10 +32,7 @@ class OpenIDConnectSession {
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   The request stack.
    */
-  public function __construct(
-    CurrentPathStack $current_path,
-    RequestStack $request_stack
-  ) {
+  public function __construct(CurrentPathStack $current_path, RequestStack $request_stack) {
     $this->currentPath = $current_path;
     $this->requestStack = $request_stack;
   }

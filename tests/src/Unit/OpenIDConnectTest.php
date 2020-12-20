@@ -260,7 +260,7 @@ class OpenIDConnectTest extends UnitTestCase {
 
     $actualPropertiesIgnored = $this->openIdConnect->userPropertiesIgnore([]);
 
-    $this->assertArrayEquals($expectedResults, $actualPropertiesIgnored);
+    $this->assertEquals($expectedResults, $actualPropertiesIgnored);
   }
 
   /**
@@ -419,7 +419,7 @@ class OpenIDConnectTest extends UnitTestCase {
    *   The userinfo array containing the email key.
    * @param string $client_name
    *   The client name for the user.
-   * @param bool $status
+   * @param int $status
    *   The user status.
    * @param bool $duplicate
    *   Whether to test a duplicate username.
@@ -430,7 +430,7 @@ class OpenIDConnectTest extends UnitTestCase {
     string $sub,
     array $userinfo,
     string $client_name,
-    bool $status,
+    int $status,
     bool $duplicate
   ): void {
     // Mock the expected username.
@@ -502,7 +502,7 @@ class OpenIDConnectTest extends UnitTestCase {
         $this->randomMachineName(),
         ['email' => 'test@123.com'],
         '',
-        FALSE,
+        0,
         FALSE,
       ],
       [
@@ -512,7 +512,7 @@ class OpenIDConnectTest extends UnitTestCase {
           'name' => $this->randomMachineName(),
         ],
         $this->randomMachineName(),
-        TRUE,
+        1,
         FALSE,
       ],
       [
@@ -522,7 +522,7 @@ class OpenIDConnectTest extends UnitTestCase {
           'preferred_username' => $this->randomMachineName(),
         ],
         $this->randomMachineName(),
-        TRUE,
+        1,
         TRUE,
       ],
     ];
@@ -769,11 +769,6 @@ class OpenIDConnectTest extends UnitTestCase {
                 $account->expects($this->once())
                   ->method('isBlocked')
                   ->willReturn(TRUE);
-
-                if ($accountExists) {
-                  $this->messenger->expects($this->once())
-                    ->method('addError');
-                }
               }
             }
 

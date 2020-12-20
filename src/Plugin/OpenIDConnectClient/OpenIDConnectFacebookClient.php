@@ -91,13 +91,7 @@ class OpenIDConnectFacebookClient extends OpenIDConnectClientBase {
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::retrieveUserInfo().
-   *
-   * @param string $access_token
-   *   An access token string.
-   *
-   * @return array|bool
-   *   A result array or false.
+   * {@inheritdoc}
    */
   public function retrieveUserInfo($access_token) {
     $request_options = [
