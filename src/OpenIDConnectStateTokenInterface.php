@@ -15,7 +15,7 @@ interface OpenIDConnectStateTokenInterface {
    * @return string
    *   A state token that later can be validated to prevent request forgery.
    */
-  public function create();
+  public function create(): string;
 
   /**
    * Confirms anti-forgery state token.
@@ -27,6 +27,6 @@ interface OpenIDConnectStateTokenInterface {
    *   Whether the state token matches the previously created one that is stored
    *   in the session.
    */
-  public function confirm($state_token);
+  public function confirm(string $state_token): bool;
 
 }

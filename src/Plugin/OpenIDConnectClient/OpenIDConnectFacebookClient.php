@@ -4,6 +4,7 @@ namespace Drupal\openid_connect\Plugin\OpenIDConnectClient;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Facebook OpenID Connect client.
@@ -38,7 +39,7 @@ class OpenIDConnectFacebookClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultConfiguration() {
+  public function defaultConfiguration(): array {
     return [
       'api_version' => '',
     ] + parent::defaultConfiguration();
@@ -47,7 +48,7 @@ class OpenIDConnectFacebookClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state): array {
     $form = parent::buildConfigurationForm($form, $form_state);
 
     $form['api_version'] = [
@@ -67,7 +68,7 @@ class OpenIDConnectFacebookClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function getEndpoints() {
+  public function getEndpoints(): array {
     return [
       'authorization' => 'https://www.facebook.com/' . $this->configuration['api_version'] . '/dialog/oauth',
       'token' => 'https://graph.facebook.com/' . $this->configuration['api_version'] . '/oauth/access_token',
@@ -78,7 +79,7 @@ class OpenIDConnectFacebookClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function authorize($scope = 'openid email') {
+  public function authorize(string $scope = 'openid email'): Response {
     // Use Facebook specific authorisations.
     return parent::authorize('public_profile email');
   }
@@ -86,14 +87,14 @@ class OpenIDConnectFacebookClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function decodeIdToken($id_token) {
+  public function decodeIdToken(string $id_token): array {
     return [];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function retrieveUserInfo($access_token) {
+  public function retrieveUserInfo(string $access_token): ?array {
     $request_options = [
       'query' => [
         'access_token' => $access_token,
@@ -111,13 +112,15 @@ class OpenIDConnectFacebookClient extends OpenIDConnectClientBase {
       $response = $client->get($endpoints['userinfo'], $request_options);
       $response_data = (string) $response->getBody();
       $userinfo = json_decode($response_data, TRUE);
-      $userinfo['sub'] = $userinfo['id'];
 
-      if (!empty($userinfo['picture']['data']['url'])) {
-        $userinfo['picture'] = $userinfo['picture']['data']['url'];
+      // Make sure the result is an array before returning it.
+      if (is_array($userinfo)) {
+        $userinfo['sub'] = $userinfo['id'];
+        if (!empty($userinfo['picture']['data']['url'])) {
+          $userinfo['picture'] = $userinfo['picture']['data']['url'];
+        }
+        return $userinfo;
       }
-
-      return $userinfo;
     }
     catch (\Exception $e) {
       $variables = [
@@ -126,8 +129,8 @@ class OpenIDConnectFacebookClient extends OpenIDConnectClientBase {
       ];
       $this->loggerFactory->get('openid_connect_' . $this->pluginId)
         ->error('@message. Details: @error_message', $variables);
-      return FALSE;
     }
+    return NULL;
   }
 
 }

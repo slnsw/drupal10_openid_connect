@@ -14,7 +14,7 @@ class OpenIDConnectStateToken implements OpenIDConnectStateTokenInterface {
   /**
    * {@inheritdoc}
    */
-  public function create() {
+  public function create(): string {
     $state = Crypt::randomBytesBase64();
     $_SESSION['openid_connect_state'] = $state;
     return $state;
@@ -23,7 +23,7 @@ class OpenIDConnectStateToken implements OpenIDConnectStateTokenInterface {
   /**
    * {@inheritdoc}
    */
-  public function confirm($state_token) {
+  public function confirm(string $state_token): bool {
     return isset($_SESSION['openid_connect_state']) &&
       $state_token == $_SESSION['openid_connect_state'];
   }

@@ -20,6 +20,7 @@ use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\Component\Datetime\TimeInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Base class for OpenID Connect client plugins.
@@ -110,16 +111,16 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    *   The OpenID state token service.
    */
   public function __construct(
-      array $configuration,
-      $plugin_id,
-      $plugin_definition,
-      RequestStack $request_stack,
-      ClientInterface $http_client,
-      LoggerChannelFactoryInterface $logger_factory,
-      TimeInterface $datetime_time,
-      KillSwitch $page_cache_kill_switch,
-      LanguageManagerInterface $language_manager,
-      OpenIDConnectStateTokenInterface $state_token
+    array $configuration,
+    string $plugin_id,
+    $plugin_definition,
+    RequestStack $request_stack,
+    ClientInterface $http_client,
+    LoggerChannelFactoryInterface $logger_factory,
+    TimeInterface $datetime_time,
+    KillSwitch $page_cache_kill_switch,
+    LanguageManagerInterface $language_manager,
+    OpenIDConnectStateTokenInterface $state_token
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
@@ -159,7 +160,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   /**
    * {@inheritdoc}
    */
-  public function getConfiguration() {
+  public function getConfiguration(): array {
     return $this->configuration;
   }
 
@@ -176,7 +177,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   /**
    * {@inheritdoc}
    */
-  public function defaultConfiguration() {
+  public function defaultConfiguration(): array {
     return [
       'client_id' => '',
       'client_secret' => '',
@@ -186,14 +187,14 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   /**
    * {@inheritdoc}
    */
-  public function calculateDependencies() {
+  public function calculateDependencies(): array {
     return [];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state): array {
     $form['redirect_url'] = [
       '#title' => $this->t('Redirect URL'),
       '#type' => 'item',
@@ -216,7 +217,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   /**
    * {@inheritdoc}
    */
-  public function getClientScopes() {
+  public function getClientScopes(): ?array {
     return $this->clientScopes;
   }
 
@@ -253,7 +254,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   /**
    * {@inheritdoc}
    */
-  public function authorize($scope = 'openid email') {
+  public function authorize(string $scope = 'openid email'): Response {
     $redirect_uri = $this->getRedirectUrl()->toString(TRUE);
     $url_options = $this->getUrlOptions($scope, $redirect_uri);
 
@@ -282,7 +283,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * @return array
    *   Array with URL options.
    */
-  protected function getUrlOptions($scope, GeneratedUrl $redirect_uri) {
+  protected function getUrlOptions(string $scope, GeneratedUrl $redirect_uri): array {
     return [
       'query' => [
         'client_id' => $this->configuration['client_id'],
@@ -305,7 +306,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * @return array
    *   Array with request options.
    */
-  protected function getRequestOptions($authorization_code, $redirect_uri) {
+  protected function getRequestOptions(string $authorization_code, string $redirect_uri): array {
     return [
       'form_params' => [
         'code' => $authorization_code,
@@ -323,7 +324,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   /**
    * {@inheritdoc}
    */
-  public function retrieveTokens($authorization_code) {
+  public function retrieveTokens(string $authorization_code): ?array {
     // Exchange `code` for access token and ID token.
     $redirect_uri = $this->getRedirectUrl()->toString();
     $endpoints = $this->getEndpoints();
@@ -335,17 +336,20 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $response_data = json_decode((string) $response->getBody(), TRUE);
 
       // Expected result.
-      $tokens = [
-        'id_token' => isset($response_data['id_token']) ? $response_data['id_token'] : NULL,
-        'access_token' => isset($response_data['access_token']) ? $response_data['access_token'] : NULL,
-      ];
-      if (array_key_exists('expires_in', $response_data)) {
-        $tokens['expire'] = $this->dateTime->getRequestTime() + $response_data['expires_in'];
+      if (is_array($response_data)) {
+        $tokens = [
+          'id_token' => isset($response_data['id_token']) ? $response_data['id_token'] : NULL,
+          'access_token' => isset($response_data['access_token']) ? $response_data['access_token'] : NULL,
+        ];
+        if (array_key_exists('expires_in', $response_data)) {
+          $tokens['expire'] = $this->dateTime->getRequestTime() + $response_data['expires_in'];
+        }
+        if (array_key_exists('refresh_token', $response_data)) {
+          $tokens['refresh_token'] = $response_data['refresh_token'];
+        }
+        return $tokens;
       }
-      if (array_key_exists('refresh_token', $response_data)) {
-        $tokens['refresh_token'] = $response_data['refresh_token'];
-      }
-      return $tokens;
+
     }
     catch (\Exception $e) {
       $variables = [
@@ -360,24 +364,25 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
 
       $this->loggerFactory->get('openid_connect_' . $this->pluginId)
         ->error('@message. Details: @error_message', $variables);
-      return FALSE;
     }
+    return NULL;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function decodeIdToken($id_token) {
+  public function decodeIdToken(string $id_token): ?array {
     list(, $claims64,) = explode('.', $id_token);
     $claims64 = str_replace(['-', '_'], ['+', '/'], $claims64);
     $claims64 = base64_decode($claims64);
-    return json_decode($claims64, TRUE);
+    $claims = json_decode($claims64, TRUE);
+    return (is_array($claims)) ? $claims : NULL;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function retrieveUserInfo($access_token) {
+  public function retrieveUserInfo(string $access_token): ?array {
     $request_options = [
       'headers' => [
         'Authorization' => 'Bearer ' . $access_token,
@@ -391,7 +396,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $response = $client->get($endpoints['userinfo'], $request_options);
       $response_data = (string) $response->getBody();
 
-      return json_decode($response_data, TRUE);
+      $userinfo = json_decode($response_data, TRUE);
+      return (is_array($userinfo)) ? $userinfo : NULL;
     }
     catch (\Exception $e) {
       $variables = [
@@ -406,8 +412,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
 
       $this->loggerFactory->get('openid_connect_' . $this->pluginId)
         ->error('@message. Details: @error_message', $variables);
-      return FALSE;
     }
+    return NULL;
   }
 
   /**
@@ -423,7 +429,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    *
    * @see \Drupal\Core\Url::fromRoute()
    */
-  protected function getRedirectUrl(array $route_parameters = [], array $options = []) {
+  protected function getRedirectUrl(array $route_parameters = [], array $options = []): Url {
     $language_none = $this->languageManager
       ->getLanguage(LanguageInterface::LANGCODE_NOT_APPLICABLE);
 

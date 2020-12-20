@@ -4,6 +4,7 @@ namespace Drupal\openid_connect\Plugin\OpenIDConnectClient;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * GitHub OpenID Connect client.
@@ -37,7 +38,7 @@ class OpenIDConnectGithubClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state): array {
     $form = parent::buildConfigurationForm($form, $form_state);
 
     $url = 'https://github.com/settings/developers';
@@ -51,7 +52,7 @@ class OpenIDConnectGithubClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function getEndpoints() {
+  public function getEndpoints(): array {
     return [
       'authorization' => 'https://github.com/login/oauth/authorize',
       'token' => 'https://github.com/login/oauth/access_token',
@@ -62,7 +63,7 @@ class OpenIDConnectGithubClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function authorize($scope = 'openid email') {
+  public function authorize(string $scope = 'openid email'): Response {
     // Use GitHub specific authorisations.
     return parent::authorize('user:email');
   }
@@ -70,14 +71,14 @@ class OpenIDConnectGithubClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function decodeIdToken($id_token) {
+  public function decodeIdToken(string $id_token) : array {
     return [];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function retrieveUserInfo($access_token) {
+  public function retrieveUserInfo(string $access_token): ?array {
     $request_options = [
       'headers' => [
         'Authorization' => 'token ' . $access_token,
@@ -134,8 +135,8 @@ class OpenIDConnectGithubClient extends OpenIDConnectClientBase {
       ];
       $this->loggerFactory->get('openid_connect_' . $this->pluginId)
         ->error('@message. Details: @error_message', $variables);
-      return FALSE;
     }
+    return NULL;
   }
 
 }

@@ -99,21 +99,21 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
   /**
    * {@inheritdoc}
    */
-  protected function getEditableConfigNames() {
+  protected function getEditableConfigNames(): array {
     return ['openid_connect.settings'];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'openid_connect_admin_settings';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state): array {
     $settings = $this->configFactory()
       ->getEditable('openid_connect.settings');
 
@@ -318,7 +318,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
-  protected function getClients() {
+  protected function getClients(): array {
     if (!isset(self::$clients)) {
       $clients = [];
 

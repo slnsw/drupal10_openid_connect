@@ -138,7 +138,7 @@ class OpenIDConnectTest extends UnitTestCase {
   /**
    * {@inheritDoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     $oldFileMock = $this->createMock(File::class);

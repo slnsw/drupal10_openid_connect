@@ -3,6 +3,7 @@
 namespace Drupal\openid_connect\Controller;
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Routing\Access\AccessInterface;
@@ -90,7 +91,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container): OpenIDConnectRedirectController {
     return new static(
       $container->get('plugin.manager.openid_connect_client.processor'),
       $container->get('openid_connect.openid_connect'),
@@ -107,7 +108,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    *   Whether the state token matches the previously created one that is stored
    *   in the session.
    */
-  public function access() {
+  public function access(): AccessResultInterface {
     // Confirm anti-forgery state token. This round-trip verification helps to
     // ensure that the user, not a malicious script, is making the request.
     $request = $this->requestStack->getCurrentRequest();
@@ -130,7 +131,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    * @throws \Exception
    */
-  public function authenticate($client_name) {
+  public function authenticate(string $client_name): RedirectResponse {
     $request = $this->requestStack->getCurrentRequest();
 
     // Delete the state token, since it's already been confirmed.

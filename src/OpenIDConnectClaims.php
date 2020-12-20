@@ -65,7 +65,7 @@ class OpenIDConnectClaims implements ContainerInjectionInterface {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container): OpenIDConnectClaims {
     return new static(
       $container->get('config.factory'),
       $container->get('module_handler')
@@ -83,7 +83,7 @@ class OpenIDConnectClaims implements ContainerInjectionInterface {
    * @return array
    *   List of claims.
    */
-  public function getClaims() {
+  public function getClaims(): array {
     if (!isset(self::$claims)) {
       $claims = $this->getDefaultClaims();
       $this->moduleHandler->alter('openid_connect_claims', $claims);
@@ -98,7 +98,7 @@ class OpenIDConnectClaims implements ContainerInjectionInterface {
    * @return array
    *   List of claims as options.
    */
-  public function getOptions() {
+  public function getOptions(): array {
     $options = [];
     foreach ($this->getClaims() as $claim_name => $claim) {
       $options[ucfirst($claim['scope'])][$claim_name] = $claim['title'];
@@ -117,7 +117,7 @@ class OpenIDConnectClaims implements ContainerInjectionInterface {
    *
    * @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
    */
-  public function getScopes(OpenIDConnectClientInterface $client = NULL) {
+  public function getScopes(OpenIDConnectClientInterface $client = NULL): string {
     $claims = $this->configFactory
       ->getEditable('openid_connect.settings')
       ->get('userinfo_mappings');
@@ -143,7 +143,7 @@ class OpenIDConnectClaims implements ContainerInjectionInterface {
    * @return array
    *   Default claims supported by the OpenID Connect module.
    */
-  protected function getDefaultClaims() {
+  protected function getDefaultClaims(): array {
     return [
       'name' => [
         'scope' => 'profile',

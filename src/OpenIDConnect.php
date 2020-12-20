@@ -167,7 +167,7 @@ class OpenIDConnect {
    * @return array
    *   User properties to ignore.
    */
-  public function userPropertiesIgnore(array $context = []) {
+  public function userPropertiesIgnore(array $context = []): array {
     $properties_ignore = [
       'uid',
       'uuid',
@@ -305,7 +305,7 @@ class OpenIDConnect {
    *
    * @throws \Exception
    */
-  public function completeAuthorization(OpenIDConnectClientInterface $client, array $tokens, &$destination) {
+  public function completeAuthorization(OpenIDConnectClientInterface $client, array $tokens, &$destination): bool {
     if ($this->currentUser->isAuthenticated()) {
       throw new \RuntimeException('User already logged in');
     }
@@ -426,7 +426,7 @@ class OpenIDConnect {
    *
    * @throws \Exception
    */
-  public function connectCurrentUser(OpenIDConnectClientInterface $client, array $tokens) {
+  public function connectCurrentUser(OpenIDConnectClientInterface $client, array $tokens): bool {
     if (!$this->currentUser->isAuthenticated()) {
       throw new \RuntimeException('User not logged in');
     }
@@ -473,7 +473,7 @@ class OpenIDConnect {
    * @return bool
    *   TRUE if access is granted, FALSE otherwise.
    */
-  public function hasSetPasswordAccess(AccountInterface $account = NULL) {
+  public function hasSetPasswordAccess(AccountInterface $account = NULL): bool {
     if (empty($account)) {
       $account = $this->currentUser;
     }
@@ -502,7 +502,7 @@ class OpenIDConnect {
    * @return \Drupal\user\UserInterface|null
    *   The user object or null on failure.
    */
-  public function createUser($sub, array $userinfo, $client_name, $status = 1) {
+  public function createUser(string $sub, array $userinfo, string $client_name, int $status = 1): ?UserInterface {
     /** @var \Drupal\user\UserInterface $account */
     $account = $this->userStorage->create([
       'name' => $this->generateUsername($sub, $userinfo, $client_name),
@@ -545,7 +545,7 @@ class OpenIDConnect {
    * @return string
    *   A unique username.
    */
-  public function generateUsername($sub, array $userinfo, $client_name) {
+  public function generateUsername(string $sub, array $userinfo, string $client_name): string {
     $name = 'oidc_' . $client_name . '_' . md5($sub);
     $candidates = ['preferred_username', 'name'];
     foreach ($candidates as $candidate) {
@@ -572,7 +572,7 @@ class OpenIDConnect {
    * @return bool
    *   TRUE if a user exists with the given name, FALSE otherwise.
    */
-  public function usernameExists($name) {
+  public function usernameExists(string $name): bool {
     $users = $this->userStorage->loadByProperties([
       'name' => $name,
     ]);
@@ -596,7 +596,7 @@ class OpenIDConnect {
    * @return bool
    *   Whether the user info was successfully saved.
    */
-  public function saveUserinfo(UserInterface $account, array $context) {
+  public function saveUserinfo(UserInterface $account, array $context): bool {
     $userinfo = $context['userinfo'];
     $properties = $this->entityFieldManager->getFieldDefinitions('user', 'user');
     $properties_skip = $this->userPropertiesIgnore($context);

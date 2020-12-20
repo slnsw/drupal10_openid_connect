@@ -21,7 +21,7 @@ class OpenIDConnectGenericClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultConfiguration() {
+  public function defaultConfiguration(): array {
     return [
       'authorization_endpoint' => '',
       'token_endpoint' => '',
@@ -32,7 +32,7 @@ class OpenIDConnectGenericClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state): array {
     $form = parent::buildConfigurationForm($form, $form_state);
 
     $form['authorization_endpoint'] = [
@@ -57,7 +57,7 @@ class OpenIDConnectGenericClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function getEndpoints() {
+  public function getEndpoints() : array {
     return [
       'authorization' => $this->configuration['authorization_endpoint'],
       'token' => $this->configuration['token_endpoint'],

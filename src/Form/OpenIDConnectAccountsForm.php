@@ -3,6 +3,7 @@
 namespace Drupal\openid_connect\Form;
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormBase;
@@ -100,7 +101,7 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container): OpenIDConnectAccountsForm {
     return new static(
       $container->get('current_user'),
       $container->get('openid_connect.session'),
@@ -114,14 +115,14 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
   /**
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'openid_connect_accounts_form';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, AccountInterface $user = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, AccountInterface $user = NULL): array {
     $form_state->set('account', $user);
 
     $clients = $this->pluginManager->getDefinitions();
@@ -223,7 +224,7 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
    * @return \Drupal\Core\Access\AccessResultInterface
    *   The access result.
    */
-  public function access(AccountInterface $user) {
+  public function access(AccountInterface $user): AccessResultInterface {
     if ($this->currentUser->hasPermission('administer users')) {
       return AccessResult::allowed();
     }

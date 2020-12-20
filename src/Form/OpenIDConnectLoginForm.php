@@ -61,7 +61,7 @@ class OpenIDConnectLoginForm extends FormBase implements ContainerInjectionInter
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container): OpenIDConnectLoginForm {
     return new static(
       $container->get('openid_connect.session'),
       $container->get('plugin.manager.openid_connect_client.processor'),
@@ -72,14 +72,14 @@ class OpenIDConnectLoginForm extends FormBase implements ContainerInjectionInter
   /**
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'openid_connect_login_form';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state): array {
     $definitions = $this->pluginManager->getDefinitions();
     foreach ($definitions as $client_id => $client) {
       if (!$this->config('openid_connect.settings.' . $client_id)

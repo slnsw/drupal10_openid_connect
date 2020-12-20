@@ -4,6 +4,7 @@ namespace Drupal\openid_connect;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\user\Entity\User;
 
 /**
  * The OpenID Connect authmap service.
@@ -54,7 +55,7 @@ class OpenIDConnectAuthmap {
    *
    * @throws \Exception
    */
-  public function createAssociation($account, $client_name, $sub) {
+  public function createAssociation($account, string $client_name, string $sub) {
     $existing_accounts = $this->getConnectedAccounts($account, $client_name);
     // Only create record if association to account doesn't exist yet.
     if (!isset($existing_accounts[$client_name]) || $existing_accounts[$client_name] !== $sub) {
@@ -76,7 +77,7 @@ class OpenIDConnectAuthmap {
    * @param string $client_name
    *   A client name.
    */
-  public function deleteAssociation($uid, $client_name = '') {
+  public function deleteAssociation(int $uid, string $client_name = '') {
     $query = $this->connection->delete('openid_connect_authmap')
       ->condition('uid', $uid);
     if (!empty($client_name)) {
@@ -93,10 +94,10 @@ class OpenIDConnectAuthmap {
    * @param string $client_name
    *   The client name.
    *
-   * @return object|bool
-   *   A user account object or FALSE
+   * @return object|null
+   *   A user account object or null.
    */
-  public function userLoadBySub($sub, $client_name) {
+  public function userLoadBySub(string $sub, string $client_name): ?User {
     $result = $this->connection->select('openid_connect_authmap', 'a')
       ->fields('a', ['uid'])
       ->condition('client_name', $client_name)
@@ -109,7 +110,7 @@ class OpenIDConnectAuthmap {
         return $account;
       }
     }
-    return FALSE;
+    return NULL;
   }
 
   /**
@@ -123,7 +124,7 @@ class OpenIDConnectAuthmap {
    * @return array
    *   An array of 'sub' properties keyed by the client name.
    */
-  public function getConnectedAccounts($account, $client_name = '') {
+  public function getConnectedAccounts($account, string $client_name = ''): array {
     $query = $this->connection->select('openid_connect_authmap', 'a')
       ->fields('a', ['client_name', 'sub'])
       ->condition('uid', $account->id());

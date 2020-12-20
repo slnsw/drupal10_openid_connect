@@ -8,7 +8,7 @@
 /**
  * Implements hook_schema().
  */
-function openid_connect_schema() {
+function openid_connect_schema(): array {
   $schema['openid_connect_authmap'] = [
     'description' => 'Stores OpenID Connect authentication mapping.',
     'fields' => [
