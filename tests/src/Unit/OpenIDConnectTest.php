@@ -277,11 +277,7 @@ class OpenIDConnectTest extends UnitTestCase {
    *
    * @dataProvider dataProviderForExtractSub
    */
-  public function testExtractSub(
-    array $userData,
-    array $userInfo,
-    $expected
-  ): void {
+  public function testExtractSub(array $userData, array $userInfo, $expected): void {
     $actual = $this->openIdConnect->extractSub($userData, $userInfo);
     $this->assertEquals($expected, $actual);
   }
@@ -685,11 +681,9 @@ class OpenIDConnectTest extends UnitTestCase {
         }
       }
       else {
-        $account = FALSE;
-
         $this->authMap->expects($this->once())
           ->method('userLoadBySub')
-          ->willReturn($account);
+          ->willReturn(NULL);
 
         $this->moduleHandler->expects($this->any())
           ->method('invokeAll')
@@ -1208,7 +1202,7 @@ class OpenIDConnectTest extends UnitTestCase {
 
         $this->authMap->expects($this->once())
           ->method('userLoadBySub')
-          ->willReturn(FALSE);
+          ->willReturn(NULL);
 
         $mappings = [
           'mail' => 'mail',
