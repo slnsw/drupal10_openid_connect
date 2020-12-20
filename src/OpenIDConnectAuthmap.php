@@ -97,7 +97,7 @@ class OpenIDConnectAuthmap {
    * @return object|null
    *   A user account object or null.
    */
-  public function userLoadBySub(string $sub, string $client_name): ?User {
+  public function userLoadBySub(string $sub, string $client_name) {
     $result = $this->connection->select('openid_connect_authmap', 'a')
       ->fields('a', ['uid'])
       ->condition('client_name', $client_name)
