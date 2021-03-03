@@ -37,9 +37,9 @@ class OpenIDConnectAuthmap {
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function __construct(Connection $connection, EntityTypeManagerInterface $entity_type_manager = NULL) {
+  public function __construct(Connection $connection, EntityTypeManagerInterface $entity_type_manager) {
     $this->connection = $connection;
-    $this->userStorage = $entity_type_manager ? $entity_type_manager->getStorage('user') : \Drupal::entityTypeManager()->getStorage('user');
+    $this->userStorage = $entity_type_manager->getStorage('user');
   }
 
   /**
