@@ -9,7 +9,7 @@ use Drupal\Core\Plugin\DefaultPluginManager;
 /**
  * Provides the OpenID Connect client plugin manager.
  */
-class OpenIDConnectClientManager extends DefaultPluginManager {
+class OpenIDConnectClientPluginManager extends DefaultPluginManager {
 
   /**
    * Constructor for OpenIDConnectClientManager objects.
