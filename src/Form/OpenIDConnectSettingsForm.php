@@ -10,7 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
 use Drupal\openid_connect\OpenIDConnect;
 use Drupal\openid_connect\OpenIDConnectClaims;
-use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
+use Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -30,7 +30,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
   /**
    * Drupal\openid_connect\Plugin\OpenIDConnectClientManager definition.
    *
-   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
+   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager
    */
   protected $pluginManager;
 
@@ -62,7 +62,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
    *   The config factory.
    * @param \Drupal\openid_connect\OpenIDConnect $openid_connect
    *   The OpenID Connect service.
-   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
+   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager $plugin_manager
    *   The plugin manager.
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager
    *   The entity field manager.
@@ -70,11 +70,11 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
    *   The claims.
    */
   public function __construct(
-      ConfigFactoryInterface $config_factory,
-      OpenIDConnect $openid_connect,
-      OpenIDConnectClientManager $plugin_manager,
-      EntityFieldManagerInterface $entity_field_manager,
-      OpenIDConnectClaims $claims
+    ConfigFactoryInterface $config_factory,
+    OpenIDConnect $openid_connect,
+    OpenIDConnectClientPluginManager $plugin_manager,
+    EntityFieldManagerInterface $entity_field_manager,
+    OpenIDConnectClaims $claims
   ) {
     parent::__construct($config_factory);
     $this->openIDConnect = $openid_connect;
@@ -90,7 +90,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
     return new static(
       $container->get('config.factory'),
       $container->get('openid_connect.openid_connect'),
-      $container->get('plugin.manager.openid_connect_client.processor'),
+      $container->get('plugin.manager.openid_connect_client'),
       $container->get('entity_field.manager'),
       $container->get('openid_connect.claims')
     );

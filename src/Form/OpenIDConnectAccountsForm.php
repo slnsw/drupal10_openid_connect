@@ -13,7 +13,7 @@ use Drupal\Core\Session\AccountProxy;
 use Drupal\openid_connect\OpenIDConnectSession;
 use Drupal\openid_connect\OpenIDConnectAuthmap;
 use Drupal\openid_connect\OpenIDConnectClaims;
-use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
+use Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -54,7 +54,7 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
   /**
    * The OpenID Connect client plugin manager.
    *
-   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
+   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager
    */
   protected $pluginManager;
 
@@ -76,18 +76,18 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
    *   The authmap storage.
    * @param \Drupal\openid_connect\OpenIDConnectClaims $claims
    *   The OpenID Connect claims.
-   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
+   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager $plugin_manager
    *   The OpenID Connect client manager.
    * @param \Drupal\Core\Config\ConfigFactory $config_factory
    *   The config factory.
    */
   public function __construct(
-      AccountProxy $current_user,
-      OpenIDConnectSession $session,
-      OpenIDConnectAuthmap $authmap,
-      OpenIDConnectClaims $claims,
-      OpenIDConnectClientManager $plugin_manager,
-      ConfigFactory $config_factory
+    AccountProxy $current_user,
+    OpenIDConnectSession $session,
+    OpenIDConnectAuthmap $authmap,
+    OpenIDConnectClaims $claims,
+    OpenIDConnectClientPluginManager $plugin_manager,
+    ConfigFactory $config_factory
   ) {
 
     $this->currentUser = $current_user;
@@ -107,7 +107,7 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
       $container->get('openid_connect.session'),
       $container->get('openid_connect.authmap'),
       $container->get('openid_connect.claims'),
-      $container->get('plugin.manager.openid_connect_client.processor'),
+      $container->get('plugin.manager.openid_connect_client'),
       $container->get('config.factory')
     );
   }

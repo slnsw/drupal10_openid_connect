@@ -7,7 +7,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\OpenIDConnectSession;
 use Drupal\openid_connect\OpenIDConnectClaims;
-use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
+use Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -27,7 +27,7 @@ class OpenIDConnectLoginForm extends FormBase implements ContainerInjectionInter
   /**
    * Drupal\openid_connect\Plugin\OpenIDConnectClientManager definition.
    *
-   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
+   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager
    */
   protected $pluginManager;
 
@@ -43,15 +43,15 @@ class OpenIDConnectLoginForm extends FormBase implements ContainerInjectionInter
    *
    * @param \Drupal\openid_connect\OpenIDConnectSession $session
    *   The OpenID Connect session service.
-   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
+   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager $plugin_manager
    *   The plugin manager.
    * @param \Drupal\openid_connect\OpenIDConnectClaims $claims
    *   The OpenID Connect claims.
    */
   public function __construct(
-      OpenIDConnectSession $session,
-      OpenIDConnectClientManager $plugin_manager,
-      OpenIDConnectClaims $claims
+    OpenIDConnectSession $session,
+    OpenIDConnectClientPluginManager $plugin_manager,
+    OpenIDConnectClaims $claims
   ) {
     $this->session = $session;
     $this->pluginManager = $plugin_manager;
@@ -64,7 +64,7 @@ class OpenIDConnectLoginForm extends FormBase implements ContainerInjectionInter
   public static function create(ContainerInterface $container): OpenIDConnectLoginForm {
     return new static(
       $container->get('openid_connect.session'),
-      $container->get('plugin.manager.openid_connect_client.processor'),
+      $container->get('plugin.manager.openid_connect_client'),
       $container->get('openid_connect.claims')
     );
   }

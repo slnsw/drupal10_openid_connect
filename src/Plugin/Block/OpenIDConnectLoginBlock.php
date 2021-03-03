@@ -7,7 +7,7 @@ use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Form\FormBuilder;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
+use Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -23,7 +23,7 @@ class OpenIDConnectLoginBlock extends BlockBase implements ContainerFactoryPlugi
   /**
    * Drupal\openid_connect\Plugin\OpenIDConnectClientManager definition.
    *
-   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
+   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager
    */
   protected $pluginManager;
 
@@ -43,7 +43,7 @@ class OpenIDConnectLoginBlock extends BlockBase implements ContainerFactoryPlugi
    *   The plugin_id for the plugin instance.
    * @param string $plugin_definition
    *   The plugin implementation definition.
-   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
+   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager $plugin_manager
    *   The OpenID Connect client manager.
    * @param \Drupal\Core\Form\FormBuilder $form_builder
    *   The form builder.
@@ -52,7 +52,7 @@ class OpenIDConnectLoginBlock extends BlockBase implements ContainerFactoryPlugi
     array $configuration,
     string $plugin_id,
     string $plugin_definition,
-    OpenIDConnectClientManager $plugin_manager,
+    OpenIDConnectClientPluginManager $plugin_manager,
     FormBuilder $form_builder
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
@@ -69,7 +69,7 @@ class OpenIDConnectLoginBlock extends BlockBase implements ContainerFactoryPlugi
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('plugin.manager.openid_connect_client.processor'),
+      $container->get('plugin.manager.openid_connect_client'),
       $container->get('form_builder')
     );
   }
