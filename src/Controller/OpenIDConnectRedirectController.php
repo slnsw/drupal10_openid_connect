@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Class OpenIDConnectRedirectController.
+ * Redirect controller.
  *
  * @package Drupal\openid_connect\Controller
  */

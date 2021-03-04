@@ -17,7 +17,7 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class OpenIDConnectAccountsForm.
+ * Provides the user-specific OpenID Connect settings form.
  *
  * @package Drupal\openid_connect\Form
  */
