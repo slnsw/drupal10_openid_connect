@@ -13,7 +13,7 @@ use Drupal\Core\Session\AccountProxy;
 use Drupal\openid_connect\OpenIDConnectSession;
 use Drupal\openid_connect\OpenIDConnectAuthmap;
 use Drupal\openid_connect\OpenIDConnectClaims;
-use Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager;
+use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -54,7 +54,7 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
   /**
    * The OpenID Connect client plugin manager.
    *
-   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager
+   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
   protected $pluginManager;
 
@@ -76,7 +76,7 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
    *   The authmap storage.
    * @param \Drupal\openid_connect\OpenIDConnectClaims $claims
    *   The OpenID Connect claims.
-   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager $plugin_manager
+   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
    *   The OpenID Connect client manager.
    * @param \Drupal\Core\Config\ConfigFactory $config_factory
    *   The config factory.
@@ -86,7 +86,7 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
     OpenIDConnectSession $session,
     OpenIDConnectAuthmap $authmap,
     OpenIDConnectClaims $claims,
-    OpenIDConnectClientPluginManager $plugin_manager,
+    OpenIDConnectClientManager $plugin_manager,
     ConfigFactory $config_factory
   ) {
 

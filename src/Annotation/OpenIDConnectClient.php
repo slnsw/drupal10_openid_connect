@@ -7,7 +7,7 @@ use Drupal\Component\Annotation\Plugin;
 /**
  * Defines a OpenID Connect client item annotation object.
  *
- * @see \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager
+ * @see \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
  * @see plugin_api
  *
  * @Annotation

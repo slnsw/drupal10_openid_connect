@@ -7,7 +7,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\OpenIDConnectSession;
 use Drupal\openid_connect\OpenIDConnectClaims;
-use Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager;
+use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -27,7 +27,7 @@ class OpenIDConnectLoginForm extends FormBase implements ContainerInjectionInter
   /**
    * Drupal\openid_connect\Plugin\OpenIDConnectClientManager definition.
    *
-   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager
+   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
   protected $pluginManager;
 
@@ -43,14 +43,14 @@ class OpenIDConnectLoginForm extends FormBase implements ContainerInjectionInter
    *
    * @param \Drupal\openid_connect\OpenIDConnectSession $session
    *   The OpenID Connect session service.
-   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager $plugin_manager
+   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
    *   The plugin manager.
    * @param \Drupal\openid_connect\OpenIDConnectClaims $claims
    *   The OpenID Connect claims.
    */
   public function __construct(
     OpenIDConnectSession $session,
-    OpenIDConnectClientPluginManager $plugin_manager,
+    OpenIDConnectClientManager $plugin_manager,
     OpenIDConnectClaims $claims
   ) {
     $this->session = $session;

@@ -8,7 +8,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Url;
-use Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager;
+use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
 use Drupal\openid_connect\OpenIDConnect;
 use Drupal\openid_connect\OpenIDConnectStateTokenInterface;
@@ -28,7 +28,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   /**
    * The OpenID client plugin manager.
    *
-   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager
+   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
   protected $pluginManager;
 
@@ -63,7 +63,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   /**
    * The constructor.
    *
-   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager $plugin_manager
+   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
    *   The OpenID client plugin manager.
    * @param \Drupal\openid_connect\OpenIDConnect $openid_connect
    *   The OpenID Connect service.
@@ -75,7 +75,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    *   The logger factory.
    */
   public function __construct(
-    OpenIDConnectClientPluginManager $plugin_manager,
+    OpenIDConnectClientManager $plugin_manager,
     OpenIDConnect $openid_connect,
     OpenIDConnectStateTokenInterface $state_token,
     RequestStack $request_stack,

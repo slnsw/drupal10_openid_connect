@@ -4,7 +4,7 @@ services:
     arguments: ['@config.factory', '@openid_connect.authmap', '@entity_type.manager', '@entity_field.manager', '@current_user', '@user.data', '@email.validator', '@messenger', '@module_handler', '@logger.factory', '@file_system']
 
   plugin.manager.openid_connect_client:
-    class: Drupal\openid_connect\Plugin\OpenIDConnectClientPluginManager
+    class: Drupal\openid_connect\Plugin\OpenIDConnectClientManager
     parent: default_plugin_manager
 
   openid_connect.authmap:
