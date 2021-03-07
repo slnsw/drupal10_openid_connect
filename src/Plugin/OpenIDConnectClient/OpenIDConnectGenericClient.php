@@ -6,14 +6,14 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 
 /**
- * Generic OpenID Connect client.
+ * Generic OAuth 2.0 OpenID Connect client.
  *
  * Used primarily to login to Drupal sites powered by oauth2_server or PHP
  * sites powered by oauth2-server-php.
  *
  * @OpenIDConnectClient(
  *   id = "generic",
- *   label = @Translation("Generic")
+ *   label = @Translation("Generic OAuth 2.0")
  * )
  */
 class OpenIDConnectGenericClient extends OpenIDConnectClientBase {
@@ -23,9 +23,9 @@ class OpenIDConnectGenericClient extends OpenIDConnectClientBase {
    */
   public function defaultConfiguration(): array {
     return [
-      'authorization_endpoint' => '',
-      'token_endpoint' => '',
-      'userinfo_endpoint' => '',
+      'authorization_endpoint' => 'https://example.com/oauth2/authorize',
+      'token_endpoint' => 'https://example.com/oauth2/token',
+      'userinfo_endpoint' => 'https://example.com/oauth2/UserInfo',
     ] + parent::defaultConfiguration();
   }
 
