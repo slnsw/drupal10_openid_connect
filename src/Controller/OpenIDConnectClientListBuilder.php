@@ -23,8 +23,8 @@ class OpenIDConnectClientListBuilder extends ConfigEntityListBuilder {
       'type' => [
         'data' => $this->t('Type'),
       ],
-      'enabled' => [
-        'data' => $this->t('Enabled'),
+      'status' => [
+        'data' => $this->t('Status'),
         // 'field' => 'status',
         'specifier' => 'status',
         'class' => [RESPONSIVE_PRIORITY_LOW],
@@ -42,7 +42,7 @@ class OpenIDConnectClientListBuilder extends ConfigEntityListBuilder {
 
     $row['label'] = $entity->label();
     $row['type'] = $plugin->getLabel();
-    $row['enabled'] = $entity->status() ? $this->t('Enabled') : $this->t('Disabled');
+    $row['status'] = $entity->status() ? $this->t('Enabled') : $this->t('Disabled');
 
     return $row + parent::buildRow($entity);
   }

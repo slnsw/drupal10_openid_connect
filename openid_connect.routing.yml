@@ -9,7 +9,7 @@ entity.openid_connect_client.list:
 entity.openid_connect_client.add_form:
   path: '/admin/config/services/openid-connect/add/{plugin_id}'
   defaults:
-    _controller: '\Drupal\openid_connect\Controller\OpenIDConnectClientAddController::form'
+    _controller: '\Drupal\openid_connect\Controller\OpenIDConnectClientController::add'
     _title: 'Add OpenID Connect client'
   requirements:
     _permission: 'administer openid connect clients'
@@ -27,6 +27,22 @@ entity.openid_connect_client.delete_form:
   defaults:
     _entity_form: 'openid_connect_client.delete'
     _title: 'Delete OpenID Connect client'
+  requirements:
+    _permission: 'administer openid connect clients'
+
+entity.openid_connect_client.enable:
+  path: '/admin/config/services/openid-connect/{openid_connect_client}/enable'
+  defaults:
+    _controller: '\Drupal\openid_connect\Controller\OpenIDConnectClientController::enable'
+    _title: 'Enable an OpenID Connect client'
+  requirements:
+    _permission: 'administer openid connect clients'
+
+entity.openid_connect_client.disable:
+  path: '/admin/config/services/openid-connect/{openid_connect_client}/disable'
+  defaults:
+    _controller: '\Drupal\openid_connect\Controller\OpenIDConnectClientController::disable'
+    _title: 'Disable an OpenID Connect client'
   requirements:
     _permission: 'administer openid connect clients'
 

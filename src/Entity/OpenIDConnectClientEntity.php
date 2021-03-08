@@ -26,10 +26,13 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientCollection;
  *   entity_keys = {
  *     "id" = "id",
  *     "label" = "label",
+ *     "status" = "status"
  *   },
  *   links = {
  *     "edit-form" = "/admin/config/services/openid-connect/{openid_connect_client}/edit",
  *     "delete-form" = "/admin/config/services/openid-connect/{openid_connect_client}/delete",
+ *     "enable" = "/admin/config/services/openid-connect/{openid_connect_client}/enable",
+ *     "disable" = "/admin/config/services/openid-connect/{openid_connect_client}/disable",
  *     "collection" = "/admin/config/services/openid-connect",
  *   },
  *   config_export = {
