@@ -8,7 +8,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Url;
-use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
+use Drupal\openid_connect\OpenIDConnectClientEntityInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
 use Drupal\openid_connect\OpenIDConnect;
 use Drupal\openid_connect\OpenIDConnectStateTokenInterface;
@@ -24,13 +24,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * @package Drupal\openid_connect\Controller
  */
 class OpenIDConnectRedirectController extends ControllerBase implements AccessInterface {
-
-  /**
-   * The OpenID client plugin manager.
-   *
-   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
-   */
-  protected $pluginManager;
 
   /**
    * The OpenID state token service.
@@ -63,8 +56,6 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   /**
    * The constructor.
    *
-   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
-   *   The OpenID client plugin manager.
    * @param \Drupal\openid_connect\OpenIDConnect $openid_connect
    *   The OpenID Connect service.
    * @param \Drupal\openid_connect\OpenIDConnectStateTokenInterface $state_token
@@ -74,14 +65,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger factory.
    */
-  public function __construct(
-    OpenIDConnectClientManager $plugin_manager,
-    OpenIDConnect $openid_connect,
-    OpenIDConnectStateTokenInterface $state_token,
-    RequestStack $request_stack,
-    LoggerChannelFactoryInterface $logger_factory
-  ) {
-    $this->pluginManager = $plugin_manager;
+  public function __construct(OpenIDConnect $openid_connect, OpenIDConnectStateTokenInterface $state_token, RequestStack $request_stack, LoggerChannelFactoryInterface $logger_factory) {
     $this->openIDConnect = $openid_connect;
     $this->stateToken = $state_token;
     $this->requestStack = $request_stack;
@@ -93,7 +77,6 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    */
   public static function create(ContainerInterface $container): OpenIDConnectRedirectController {
     return new static(
-      $container->get('plugin.manager.openid_connect_client'),
       $container->get('openid_connect.openid_connect'),
       $container->get('openid_connect.state_token'),
       $container->get('request_stack'),
@@ -122,16 +105,15 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   /**
    * Redirect.
    *
-   * @param string $client_name
-   *   The client name.
+   * @param \Drupal\openid_connect\OpenIDConnectClientEntityInterface $openid_connect_client
+   *   The client.
    *
    * @return \Symfony\Component\HttpFoundation\RedirectResponse
    *   The redirect response starting the authentication request.
    *
-   * @throws \Drupal\Component\Plugin\Exception\PluginException
    * @throws \Exception
    */
-  public function authenticate(string $client_name): RedirectResponse {
+  public function authenticate(OpenIDConnectClientEntityInterface $openid_connect_client): RedirectResponse {
     $request = $this->requestStack->getCurrentRequest();
 
     // Delete the state token, since it's already been confirmed.
@@ -151,20 +133,15 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
     }
     $destination = $parameters['destination'];
 
-    $configuration = $this->config('openid_connect.settings.' . $client_name)
-      ->get('settings');
-    $client = $this->pluginManager->createInstance(
-      $client_name,
-      $configuration
-    );
-    if (!$request->get('error') && (!($client instanceof OpenIDConnectClientInterface) || !$request->get('code'))) {
+    $plugin = $openid_connect_client->getPlugin();
+    if (!$request->get('error') && (!($plugin instanceof OpenIDConnectClientInterface) || !$request->get('code'))) {
       // In case we don't have an error, but the client could not be loaded or
       // there is no state token specified, the URI is probably being visited
       // outside of the login flow.
       throw new NotFoundHttpException();
     }
 
-    $provider_param = ['@provider' => $client->getPluginDefinition()['label']];
+    $provider_param = ['@provider' => $openid_connect_client->label()];
 
     if ($request->get('error')) {
       if (in_array($request->get('error'), [
@@ -184,16 +161,16 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
           '@details' => $request->get('error_description') ? $request->get('error_description') : $this->t('Unknown error.'),
         ];
         $message = 'Authorization failed: @error. Details: @details';
-        $this->loggerFactory->get('openid_connect_' . $client_name)->error($message, $variables);
+        $this->loggerFactory->get('openid_connect_' . $openid_connect_client->getPluginId())->error($message, $variables);
         $this->messenger()->addError($this->t('Could not authenticate with @provider.', $provider_param));
       }
     }
     else {
       // Process the login or connect operations.
-      $tokens = $client->retrieveTokens($request->get('code'));
+      $tokens = $plugin->retrieveTokens($request->get('code'));
       if ($tokens) {
         if ($parameters['op'] === 'login') {
-          $success = $this->openIDConnect->completeAuthorization($client, $tokens, $destination);
+          $success = $this->openIDConnect->completeAuthorization($plugin, $tokens, $destination);
 
           if (!$success) {
             // Check Drupal user register settings before saving.
@@ -219,7 +196,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
           }
         }
         elseif ($parameters['op'] === 'connect' && $parameters['connect_uid'] === $this->currentUser()->id()) {
-          $success = $this->openIDConnect->connectCurrentUser($client, $tokens);
+          $success = $this->openIDConnect->connectCurrentUser($plugin, $tokens);
           if ($success) {
             $this->messenger()->addMessage($this->t('Account successfully connected with @provider.', $provider_param));
           }

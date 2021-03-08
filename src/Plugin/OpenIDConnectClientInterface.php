@@ -4,14 +4,14 @@ namespace Drupal\openid_connect\Plugin;
 
 use Drupal\Component\Plugin\ConfigurableInterface;
 use Drupal\Component\Plugin\DependentPluginInterface;
-use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Core\Plugin\PluginFormInterface;
+use Drupal\Core\Plugin\PluginWithFormsInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Defines an interface for OpenID Connect client plugins.
  */
-interface OpenIDConnectClientInterface extends ConfigurableInterface, DependentPluginInterface, PluginFormInterface, PluginInspectionInterface {
+interface OpenIDConnectClientInterface extends ConfigurableInterface, DependentPluginInterface, PluginFormInterface, PluginWithFormsInterface {
 
   /**
    * Returns an array of endpoints.
@@ -103,5 +103,13 @@ interface OpenIDConnectClientInterface extends ConfigurableInterface, DependentP
    *   Additional user profile information or NULL on failure.
    */
   public function retrieveUserInfo(string $access_token): ?array;
+
+  /**
+   * Return the plugin label as defined in the annotation.
+   *
+   * @return string
+   *   Plugin label.
+   */
+  public function getLabel(): string;
 
 }

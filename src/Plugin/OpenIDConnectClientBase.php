@@ -2,7 +2,6 @@
 
 namespace Drupal\openid_connect\Plugin;
 
-use Drupal\Component\Plugin\PluginBase;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\GeneratedUrl;
@@ -11,6 +10,8 @@ use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Plugin\PluginBase;
+use Drupal\Core\Plugin\PluginWithFormsTrait;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
@@ -27,6 +28,7 @@ use Symfony\Component\HttpFoundation\Response;
  */
 abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConnectClientInterface, ContainerFactoryPluginInterface {
   use StringTranslationTrait;
+  use PluginWithFormsTrait;
 
   /**
    * The request stack used to access request globals.
@@ -110,18 +112,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * @param \Drupal\openid_connect\OpenIDConnectStateTokenInterface $state_token
    *   The OpenID state token service.
    */
-  public function __construct(
-    array $configuration,
-    string $plugin_id,
-    $plugin_definition,
-    RequestStack $request_stack,
-    ClientInterface $http_client,
-    LoggerChannelFactoryInterface $logger_factory,
-    TimeInterface $datetime_time,
-    KillSwitch $page_cache_kill_switch,
-    LanguageManagerInterface $language_manager,
-    OpenIDConnectStateTokenInterface $state_token
-  ) {
+  public function __construct(array $configuration, string $plugin_id, $plugin_definition, RequestStack $request_stack, ClientInterface $http_client, LoggerChannelFactoryInterface $logger_factory, TimeInterface $datetime_time, KillSwitch $page_cache_kill_switch, LanguageManagerInterface $language_manager, OpenIDConnectStateTokenInterface $state_token) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->requestStack = $request_stack;
@@ -137,12 +128,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   /**
    * {@inheritdoc}
    */
-  public static function create(
-      ContainerInterface $container,
-      array $configuration,
-      $plugin_id,
-      $plugin_definition
-  ) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
       $configuration,
       $plugin_id,
@@ -155,6 +141,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $container->get('language_manager'),
       $container->get('openid_connect.state_token')
     );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getLabel() : string {
+    return $this->pluginDefinition['label'];
   }
 
   /**
@@ -195,21 +188,18 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * {@inheritdoc}
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state): array {
-    $form['redirect_url'] = [
-      '#title' => $this->t('Redirect URL'),
-      '#type' => 'item',
-      '#markup' => $this->getRedirectUrl()->toString(),
-    ];
     $form['client_id'] = [
       '#title' => $this->t('Client ID'),
       '#type' => 'textfield',
       '#default_value' => $this->configuration['client_id'],
+      '#required' => TRUE,
     ];
     $form['client_secret'] = [
       '#title' => $this->t('Client secret'),
       '#type' => 'textfield',
       '#maxlength' => 1024,
       '#default_value' => $this->configuration['client_secret'],
+      '#required' => TRUE,
     ];
     return $form;
   }
@@ -225,30 +215,14 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * {@inheritdoc}
    */
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
-    // Provider label as array for StringTranslationTrait::t() argument.
-    $provider = [
-      '@provider' => $this->getPluginDefinition()['label'],
-    ];
-
-    // Get plugin setting values.
-    $configuration = $form_state->getValues();
-
-    // Whether a client ID is given.
-    if (empty($configuration['client_id'])) {
-      $form_state->setErrorByName('client_id', $this->t('The client ID is missing for @provider.', $provider));
-    }
-    // Whether a client secret is given.
-    if (empty($configuration['client_secret'])) {
-      $form_state->setErrorByName('client_secret', $this->t('The client secret is missing for @provider.', $provider));
-    }
+    // Empty function. Can be overridden by derived classes if required.
   }
 
   /**
    * {@inheritdoc}
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
-    // No need to do anything, but make the function have a body anyway
-    // so that it's callable by overriding methods.
+    // Empty function. Can be overridden by derived classes if required.
   }
 
   /**
@@ -430,17 +404,11 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * @see \Drupal\Core\Url::fromRoute()
    */
   protected function getRedirectUrl(array $route_parameters = [], array $options = []): Url {
-    $language_none = $this->languageManager
-      ->getLanguage(LanguageInterface::LANGCODE_NOT_APPLICABLE);
-
-    $route_parameters += [
-      'client_name' => $this->pluginId,
-    ];
-    $options += [
+    $route_parameters += ['openid_connect_client' => $this->configuration['entity_id']];
+    return Url::fromRoute('openid_connect.redirect_controller_redirect', $route_parameters, [
       'absolute' => TRUE,
-      'language' => $language_none,
-    ];
-    return Url::fromRoute('openid_connect.redirect_controller_redirect', $route_parameters, $options);
+      'language' => $this->languageManager->getLanguage(LanguageInterface::LANGCODE_NOT_APPLICABLE),
+    ]);
   }
 
 }

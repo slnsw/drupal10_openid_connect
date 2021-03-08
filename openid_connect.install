@@ -146,3 +146,32 @@ function openid_connect_update_8106() {
   ]);
   $config->save(TRUE);
 }
+
+/**
+ * Convert client configuration objects to configuration entities.
+ */
+function openid_connect_update_8200() {
+  $definitions = \Drupal::service('plugin.manager.openid_connect_client')->getDefinitions();
+  $entity_storage = \Drupal::entityTypeManager()->getStorage('openid_connect_client');
+
+  foreach ($definitions as $plugin_id => $plugin) {
+    $configuration = \Drupal::configFactory()
+      ->getEditable('openid_connect.settings.' . $plugin['id']);
+
+    // Only convert configuration where the client id or secret are not empty.
+    $settings = $configuration->get('settings');
+    if (!empty($settings['client_id']) || !empty($settings['client_secret'])) {
+      // Create new configuration entity.
+      $entity_storage->create([
+        'status' => $configuration->get('enabled'),
+        'id' => $plugin['id'],
+        'label' => $plugin['label']->getUntranslatedString(),
+        'plugin' => $plugin['id'],
+        'settings' => $settings,
+      ])->save();
+    }
+
+    // Delete old configuration object.
+    $configuration->delete();
+  }
+}
