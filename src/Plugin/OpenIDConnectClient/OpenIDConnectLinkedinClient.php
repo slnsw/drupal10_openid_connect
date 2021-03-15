@@ -2,6 +2,7 @@
 
 namespace Drupal\openid_connect\Plugin\OpenIDConnectClient;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 use Symfony\Component\HttpFoundation\Response;
@@ -116,7 +117,7 @@ class OpenIDConnectLinkedinClient extends OpenIDConnectClientBase {
 
     try {
       $response = $this->httpClient->get($endpoints['useremail'], $request_options);
-      $object = json_decode((string) $response->getBody(), TRUE);
+      $object = Json::decode((string) $response->getBody());
 
       if (isset($object['elements'])) {
         foreach ($object['elements'] as $element) {

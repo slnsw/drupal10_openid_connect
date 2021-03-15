@@ -2,6 +2,7 @@
 
 namespace Drupal\openid_connect\Plugin;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\GeneratedUrl;
@@ -307,7 +308,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $client = $this->httpClient;
     try {
       $response = $client->post($endpoints['token'], $request_options);
-      $response_data = json_decode((string) $response->getBody(), TRUE);
+      $response_data = Json::decode((string) $response->getBody());
 
       // Expected result.
       if (is_array($response_data)) {
@@ -347,9 +348,9 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    */
   public function decodeIdToken(string $id_token): ?array {
     list(, $claims64,) = explode('.', $id_token);
-    $claims64 = str_replace(['-', '_'], ['+', '/'], $claims64);
-    $claims64 = base64_decode($claims64);
-    $claims = json_decode($claims64, TRUE);
+    $claims = Json::decode(base64_decode(
+      str_replace(['-', '_'], ['+', '/'], $claims64)
+    ));
     return (is_array($claims)) ? $claims : NULL;
   }
 
@@ -368,9 +369,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $client = $this->httpClient;
     try {
       $response = $client->get($endpoints['userinfo'], $request_options);
-      $response_data = (string) $response->getBody();
-
-      $userinfo = json_decode($response_data, TRUE);
+      $userinfo = Json::decode((string) $response->getBody());
       return (is_array($userinfo)) ? $userinfo : NULL;
     }
     catch (\Exception $e) {

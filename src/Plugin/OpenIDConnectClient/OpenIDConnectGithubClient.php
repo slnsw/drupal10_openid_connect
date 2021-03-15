@@ -2,6 +2,7 @@
 
 namespace Drupal\openid_connect\Plugin\OpenIDConnectClient;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 use Symfony\Component\HttpFoundation\Response;
@@ -91,7 +92,7 @@ class OpenIDConnectGithubClient extends OpenIDConnectClientBase {
     try {
       $claims = [];
       $response = $client->get($endpoints['userinfo'], $request_options);
-      $response_data = json_decode((string) $response->getBody(), TRUE);
+      $response_data = Json::decode((string) $response->getBody());
 
       foreach ($this->userInfoMapping as $claim => $key) {
         if (array_key_exists($key, $response_data)) {
@@ -114,7 +115,7 @@ class OpenIDConnectGithubClient extends OpenIDConnectClientBase {
       // find out the user's email address(es).
       if (empty($claims['email'])) {
         $email_response = $client->get($endpoints['userinfo'] . '/emails', $request_options);
-        $email_response_data = json_decode((string) $email_response->getBody(), TRUE);
+        $email_response_data = Json::decode((string) $email_response->getBody());
 
         foreach ($email_response_data as $email) {
           // See https://developer.github.com/v3/users/emails/

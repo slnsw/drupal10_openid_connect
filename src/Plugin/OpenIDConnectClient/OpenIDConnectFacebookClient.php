@@ -2,6 +2,7 @@
 
 namespace Drupal\openid_connect\Plugin\OpenIDConnectClient;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 use Symfony\Component\HttpFoundation\Response;
@@ -110,8 +111,7 @@ class OpenIDConnectFacebookClient extends OpenIDConnectClientBase {
     $client = $this->httpClient;
     try {
       $response = $client->get($endpoints['userinfo'], $request_options);
-      $response_data = (string) $response->getBody();
-      $userinfo = json_decode($response_data, TRUE);
+      $userinfo = Json::decode((string) $response->getBody());
 
       // Make sure the result is an array before returning it.
       if (is_array($userinfo)) {
