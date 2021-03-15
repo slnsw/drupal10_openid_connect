@@ -99,7 +99,7 @@ function openid_connect_user_format_name_alter(&$name, $account) {
 }
 
 /**
- * Implements hook_form_FORM_ID_alter() for form_user_form.
+ * Implements hook_form_FORM_ID_alter() for user_form.
  */
 function openid_connect_form_user_form_alter(&$form, &$form_state) {
   // Whether the current user is allowed to change its password.
@@ -121,7 +121,7 @@ function openid_connect_form_user_form_alter(&$form, &$form_state) {
 }
 
 /**
- * Implements hook_form_FORM_ID_alter().
+ * Implements hook_form_FORM_ID_alter() for user_profile_form.
  */
 function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
   if (isset($form['account'])) {
@@ -140,7 +140,7 @@ function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
 }
 
 /**
- * Implements hook_form_FORM_ID_alter().
+ * Implements hook_form_FORM_ID_alter() for user_login_form.
  */
 function openid_connect_form_user_login_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   $user_login_display = \Drupal::config('openid_connect.settings')

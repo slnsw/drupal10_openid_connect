@@ -154,7 +154,7 @@ function openid_connect_update_8200() {
   $definitions = \Drupal::service('plugin.manager.openid_connect_client')->getDefinitions();
   $entity_storage = \Drupal::entityTypeManager()->getStorage('openid_connect_client');
 
-  foreach ($definitions as $plugin_id => $plugin) {
+  foreach ($definitions as $plugin) {
     $configuration = \Drupal::configFactory()
       ->getEditable('openid_connect.settings.' . $plugin['id']);
 
