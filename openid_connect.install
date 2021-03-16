@@ -175,3 +175,16 @@ function openid_connect_update_8200() {
     $configuration->delete();
   }
 }
+
+/**
+ * Update the active config for installations using generic client.
+ */
+function openid_connect_update_8201() {
+  /** @var \Drupal\openid_connect\OpenIDConnectClientEntityInterface[] $clients */
+  $clients = \Drupal::entityTypeManager()->getStorage('openid_connect_client')->loadByProperties(['plugin' => 'generic']);
+
+  foreach ($clients as $client) {
+    $client->getPlugin()->setConfiguration(['issuer_url' => '']);
+    $client->save();
+  }
+}

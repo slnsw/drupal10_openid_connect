@@ -66,6 +66,9 @@ openid_connect.client.plugin.generic:
   label: 'OpenID Connect Generic settings'
   mapping:
     <<: *base
+    issuer_url:
+      type: string
+      label: 'Issuer URL'
     authorization_endpoint:
       type: string
       label: 'Authorization endpoint'

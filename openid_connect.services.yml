@@ -22,3 +22,7 @@ services:
   openid_connect.session:
     class: Drupal\openid_connect\OpenIDConnectSession
     arguments: ['@path.current', '@request_stack']
+
+  openid_connect.autodiscover:
+    class: Drupal\openid_connect\OpenIDConnectAutoDiscover
+    arguments: ['@http_client_factory', '@logger.factory']

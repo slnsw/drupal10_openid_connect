@@ -16,6 +16,7 @@ use Drupal\Core\Plugin\PluginWithFormsTrait;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
+use Drupal\openid_connect\OpenIDConnectAutoDiscover;
 use Drupal\openid_connect\OpenIDConnectStateTokenInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
@@ -90,6 +91,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   protected $stateToken;
 
   /**
+   * The OpenID well-known discovery service.
+   *
+   * @var \Drupal\openid_connect\OpenIDConnectAutoDiscover
+   */
+  protected $autoDiscover;
+
+  /**
    * The constructor.
    *
    * @param array $configuration
@@ -112,8 +120,10 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    *   The language manager.
    * @param \Drupal\openid_connect\OpenIDConnectStateTokenInterface $state_token
    *   The OpenID state token service.
+   * @param \Drupal\openid_connect\OpenIDConnectAutoDiscover $auto_discover
+   *   The OpenID well-known discovery service.
    */
-  public function __construct(array $configuration, string $plugin_id, $plugin_definition, RequestStack $request_stack, ClientInterface $http_client, LoggerChannelFactoryInterface $logger_factory, TimeInterface $datetime_time, KillSwitch $page_cache_kill_switch, LanguageManagerInterface $language_manager, OpenIDConnectStateTokenInterface $state_token) {
+  public function __construct(array $configuration, string $plugin_id, $plugin_definition, RequestStack $request_stack, ClientInterface $http_client, LoggerChannelFactoryInterface $logger_factory, TimeInterface $datetime_time, KillSwitch $page_cache_kill_switch, LanguageManagerInterface $language_manager, OpenIDConnectStateTokenInterface $state_token, OpenIDConnectAutoDiscover $auto_discover) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->requestStack = $request_stack;
@@ -123,6 +133,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $this->pageCacheKillSwitch = $page_cache_kill_switch;
     $this->languageManager = $language_manager;
     $this->stateToken = $state_token;
+    $this->autoDiscover = $auto_discover;
     $this->setConfiguration($configuration);
   }
 
@@ -140,7 +151,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $container->get('datetime.time'),
       $container->get('page_cache_kill_switch'),
       $container->get('language_manager'),
-      $container->get('openid_connect.state_token')
+      $container->get('openid_connect.state_token'),
+      $container->get('openid_connect.autodiscover')
     );
   }
 
@@ -162,10 +174,26 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * {@inheritdoc}
    */
   public function setConfiguration(array $configuration) {
+    $current_configuration = $this->configuration ?: $this->defaultConfiguration();
+
     $this->configuration = NestedArray::mergeDeep(
-      $this->defaultConfiguration(),
+      $current_configuration,
       $configuration
     );
+  }
+
+  /**
+   * Unsets some elements of the configuration.
+   *
+   * @param array $keys
+   *   Array of keys to unset.
+   */
+  protected function unsetConfigurationKeys(array $keys) {
+    foreach ($keys as $key) {
+      if (isset($this->configuration[$key])) {
+        unset($this->configuration[$key]);
+      }
+    }
   }
 
   /**
