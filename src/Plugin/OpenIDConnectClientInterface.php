@@ -112,4 +112,20 @@ interface OpenIDConnectClientInterface extends ConfigurableInterface, DependentP
    */
   public function getLabel(): string;
 
+  /**
+   * Sets the parent entity ID.
+   *
+   * @param string $entity_id
+   *   The parent entity ID.
+   */
+  public function setParentEntityId(string $entity_id);
+
+  /**
+   * Returns the parent entity ID.
+   *
+   * @return string
+   *   The parent entity ID.
+   */
+  public function getParentEntityId() : string;
+
 }

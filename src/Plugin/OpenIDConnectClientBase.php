@@ -98,6 +98,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   protected $autoDiscover;
 
   /**
+   * The parent entity identifier.
+   *
+   * @var string
+   */
+  protected $parentEntityId;
+
+  /**
    * The constructor.
    *
    * @param array $configuration
@@ -134,6 +141,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $this->languageManager = $language_manager;
     $this->stateToken = $state_token;
     $this->autoDiscover = $auto_discover;
+    $this->parentEntityId = '';
     $this->setConfiguration($configuration);
   }
 
@@ -204,6 +212,20 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       'client_id' => '',
       'client_secret' => '',
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setParentEntityId(string $entity_id) {
+    $this->parentEntityId = $entity_id;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getParentEntityId() : string {
+    return $this->parentEntityId;
   }
 
   /**
@@ -431,7 +453,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * @see \Drupal\Core\Url::fromRoute()
    */
   protected function getRedirectUrl(array $route_parameters = [], array $options = []): Url {
-    $route_parameters += ['openid_connect_client' => $this->configuration['entity_id']];
+    $route_parameters += ['openid_connect_client' => $this->parentEntityId];
     return Url::fromRoute('openid_connect.redirect_controller_redirect', $route_parameters, [
       'absolute' => TRUE,
       'language' => $this->languageManager->getLanguage(LanguageInterface::LANGCODE_NOT_APPLICABLE),

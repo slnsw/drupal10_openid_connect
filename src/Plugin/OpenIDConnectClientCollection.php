@@ -33,7 +33,6 @@ class OpenIDConnectClientCollection extends DefaultSingleLazyPluginCollection {
   public function __construct(PluginManagerInterface $manager, string $instance_id, array $configuration, ?string $openid_connect_client_id) {
     if (!empty($openid_connect_client_id)) {
       $this->clientId = $openid_connect_client_id;
-      $configuration += ['entity_id' => $openid_connect_client_id];
     }
     parent::__construct($manager, $instance_id, $configuration);
   }
@@ -48,6 +47,11 @@ class OpenIDConnectClientCollection extends DefaultSingleLazyPluginCollection {
 
     try {
       parent::initializePlugin($instance_id);
+      if (isset($this->clientId)) {
+        /** @var \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface $plugin */
+        $plugin = $this->get($instance_id);
+        $plugin->setParentEntityId($this->clientId);
+      }
     }
     catch (PluginException $e) {
       $module = $this->configuration['provider'];
