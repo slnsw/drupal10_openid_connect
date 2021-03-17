@@ -158,7 +158,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
         '#title' => $property->getLabel(),
         '#description' => $property->getDescription(),
         '#options' => (array) $claims,
-        '#empty_value' => 0,
+        '#empty_value' => '',
         '#empty_option' => $this->t('- No mapping -'),
         '#default_value' => isset($mappings[$property_name]) ? $mappings[$property_name] : $default_value,
       ];
@@ -178,7 +178,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
       ->set('connect_existing_users', $form_state->getValue('connect_existing_users'))
       ->set('override_registration_settings', $form_state->getValue('override_registration_settings'))
       ->set('user_login_display', $form_state->getValue('user_login_display'))
-      ->set('userinfo_mappings', $form_state->getValue('userinfo_mappings'))
+      ->set('userinfo_mappings', array_filter($form_state->getValue('userinfo_mappings')))
       ->save();
   }
 
