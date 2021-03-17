@@ -148,7 +148,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
         continue;
       }
       // Always map the timezone.
-      $default_value = 0;
+      $default_value = '';
       if ($property_name == 'timezone') {
         $default_value = 'zoneinfo';
       }
