@@ -641,6 +641,10 @@ class OpenIDConnect {
                 $account->set($property_name, !empty($claim_value));
                 break;
 
+              case 'entity_reference':
+                $account->set($property_name, ['target_id' => $claim_value]);
+                break;
+
               case 'image':
                 // Create file object from remote URL.
                 $basename = explode('?', $this->fileSystem->basename($claim_value))[0];
