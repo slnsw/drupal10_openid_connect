@@ -98,8 +98,6 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
     $settings = $this->configFactory()
       ->getEditable('openid_connect.settings');
 
-    $form['#tree'] = TRUE;
-
     $form['always_save_userinfo'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Save user claims on every login'),
@@ -134,9 +132,22 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
       '#default_value' => $settings->get('user_login_display'),
     ];
 
+    $form['redirects'] = [
+      '#title' => $this->t('Redirects'),
+      '#type' => 'fieldset',
+    ];
+
+    $form['redirects']['redirect_login'] = [
+      '#title' => $this->t('Login'),
+      '#type' => 'textfield',
+      '#description' => $this->t('Path to redirect to on client login'),
+      '#default_value' => $settings->get('redirect_login'),
+    ];
+
     $form['userinfo_mappings'] = [
       '#title' => $this->t('User claims mapping'),
       '#type' => 'fieldset',
+      '#tree' => TRUE,
     ];
 
     $properties = $this->entityFieldManager->getFieldDefinitions('user', 'user');
@@ -178,6 +189,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjec
       ->set('connect_existing_users', $form_state->getValue('connect_existing_users'))
       ->set('override_registration_settings', $form_state->getValue('override_registration_settings'))
       ->set('user_login_display', $form_state->getValue('user_login_display'))
+      ->set('redirect_login', $form_state->getValue('redirect_login'))
       ->set('userinfo_mappings', array_filter($form_state->getValue('userinfo_mappings')))
       ->save();
   }

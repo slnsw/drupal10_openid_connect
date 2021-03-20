@@ -21,7 +21,7 @@ services:
 
   openid_connect.session:
     class: Drupal\openid_connect\OpenIDConnectSession
-    arguments: ['@path.current', '@request_stack']
+    arguments: ['@config.factory', '@redirect.destination']
 
   openid_connect.autodiscover:
     class: Drupal\openid_connect\OpenIDConnectAutoDiscover

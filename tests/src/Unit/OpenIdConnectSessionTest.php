@@ -4,11 +4,11 @@ declare(strict_types = 1);
 
 namespace Drupal\Tests\openid_connect\Unit;
 
-use Drupal\Core\Path\CurrentPathStack;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Routing\RedirectDestinationInterface;
 use Drupal\openid_connect\OpenIDConnectSession;
 use Drupal\Tests\UnitTestCase;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * @coversDefaultClass \Drupal\openid_connect\OpenIDConnectSession
@@ -32,18 +32,18 @@ class OpenIdConnectSessionTest extends UnitTestCase {
   const TEST_QUERY = 'sport=baseball&team=reds';
 
   /**
-   * A mock of the current_path service.
+   * A mock of the config.factory service.
    *
    * @var \PHPUnit\Framework\MockObject\MockObject
    */
-  protected $currentPath;
+  protected $configFactory;
 
   /**
-   * A mock of the requestStack method for testing.
+   * A mock of the redirect.destination service.
    *
    * @var \PHPUnit\Framework\MockObject\MockObject
    */
-  protected $requestStack;
+  protected $redirectDestination;
 
   /**
    * {@inheritdoc}
@@ -51,20 +51,11 @@ class OpenIdConnectSessionTest extends UnitTestCase {
   protected function setUp(): void {
     parent::setUp();
 
-    // Mock the currentPath service.
-    $this->currentPath = $this->createMock(CurrentPathStack::class);
+    // Mock the configuration factory service.
+    $this->configFactory = $this->createMock(ConfigFactoryInterface::class);
 
-    // Mock the Request class that is returned by RequestStack class.
-    $request = $this->createMock(Request::class);
-    $request->expects($this->once())
-      ->method('getQueryString')
-      ->willReturn('sport=baseball&team=reds');
-
-    // Mock the requestStack service.
-    $this->requestStack = $this->createMock(RequestStack::class);
-    $this->requestStack->expects($this->once())
-      ->method('getCurrentRequest')
-      ->willReturn($request);
+    // Mock the 'redirect.destination' service.
+    $this->redirectDestination = $this->createMock(RedirectDestinationInterface::class);
   }
 
   /**
@@ -77,13 +68,14 @@ class OpenIdConnectSessionTest extends UnitTestCase {
       self::TEST_QUERY
     );
 
-    // Mock the getPath method for the current path service.
-    $this->currentPath->expects($this->once())
-      ->method('getPath')
-      ->willReturn(self::TEST_PATH);
+    $destination = self::TEST_PATH . '?' . self::TEST_QUERY;
+    // Mock the get method for the 'redirect.destination' service.
+    $this->redirectDestination->expects($this->once())
+      ->method('get')
+      ->willReturn($destination);
 
     // Create a new OpenIDConnectSession class.
-    $session = new OpenIDConnectSession($this->currentPath, $this->requestStack);
+    $session = new OpenIDConnectSession($this->configFactory, $this->redirectDestination);
 
     // Call the saveDestination() method.
     $session->saveDestination();
@@ -98,17 +90,24 @@ class OpenIdConnectSessionTest extends UnitTestCase {
   public function testSaveDestinationUserPath(): void {
     // Setup our expected results.
     $expectedSession = $this->getExpectedSessionArray(
-      '/user',
-      self::TEST_QUERY
+      'user'
     );
 
-    // Mock the getPath method with the user path.
-    $this->currentPath->expects($this->once())
-      ->method('getPath')
+    $immutableConfig = $this
+      ->createMock(ImmutableConfig::class);
+
+    $this->configFactory->expects($this->once())
+      ->method('get')
+      ->with('openid_connect.settings')
+      ->willReturn($immutableConfig);
+
+    // Mock the get method with the user login path.
+    $this->redirectDestination->expects($this->once())
+      ->method('get')
       ->willReturn(self::TEST_USER_PATH);
 
     // Create a class to test with.
-    $session = new OpenIDConnectSession($this->currentPath, $this->requestStack);
+    $session = new OpenIDConnectSession($this->configFactory, $this->redirectDestination);
 
     // Call the saveDestination method.
     $session->saveDestination();
@@ -128,14 +127,14 @@ class OpenIdConnectSessionTest extends UnitTestCase {
    * @return array
    *   The expected session array.
    */
-  private function getExpectedSessionArray(string $path, string $queryString): array {
+  private function getExpectedSessionArray(string $path, string $queryString = ''): array {
+    $destination = $path;
+    if ($queryString) {
+      $destination .= '?' . $queryString;
+    }
+
     return [
-      'openid_connect_destination' => [
-        $path,
-        [
-          'query' => $queryString,
-        ],
-      ],
+      'openid_connect_destination' => ltrim($destination, '/'),
     ];
   }
 

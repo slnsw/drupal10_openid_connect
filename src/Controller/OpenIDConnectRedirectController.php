@@ -210,14 +210,11 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
       }
     }
 
-    // It's possible to set 'options' in the redirect destination.
-    if (is_array($destination)) {
-      $query = !empty($destination[1]['query']) ? '?' . $destination[1]['query'] : '';
-      $redirect = Url::fromUri('internal:/' . ltrim($destination[0], '/') . $query)->toString();
-    }
-    else {
-      $redirect = Url::fromUri('internal:/' . ltrim($destination, '/'))->toString();
-    }
+    // The destination parameter should be a prepared uri and include any query
+    // parameters or fragments already.
+    //
+    // @see \Drupal\openid_connect\OpenIDConnectSession::saveDestination()
+    $redirect = Url::fromUri('internal:/' . ltrim($destination, '/'))->toString();
     return new RedirectResponse($redirect);
   }
 

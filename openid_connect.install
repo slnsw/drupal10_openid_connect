@@ -188,3 +188,14 @@ function openid_connect_update_8201() {
     $client->save();
   }
 }
+
+/**
+ * Add redirect_login to module settings.
+ */
+function openid_connect_update_8202() {
+  $config_factory = \Drupal::configFactory();
+
+  $config = $config_factory->getEditable('openid_connect.settings');
+  $config->set('redirect_login', 'user');
+  $config->save(TRUE);
+}

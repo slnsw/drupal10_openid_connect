@@ -2,8 +2,8 @@
 
 namespace Drupal\openid_connect;
 
-use Drupal\Core\Path\CurrentPathStack;
-use Symfony\Component\HttpFoundation\RequestStack;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Routing\RedirectDestinationInterface;
 
 /**
  * Session service of the OpenID Connect module.
@@ -11,30 +11,30 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class OpenIDConnectSession {
 
   /**
-   * The current path.
+   * Drupal\Core\Config\ConfigFactory definition.
    *
-   * @var \Drupal\Core\Path\CurrentPathStack
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
-  protected $currentPath;
+  protected $configFactory;
 
   /**
-   * The request stack.
+   * The redirect destination service.
    *
-   * @var \Symfony\Component\HttpFoundation\RequestStack
+   * @var \Drupal\Core\Routing\RedirectDestinationInterface
    */
-  protected $requestStack;
+  protected $redirectDestination;
 
   /**
    * Construct an instance of the OpenID Connect session service.
    *
-   * @param \Drupal\Core\Path\CurrentPathStack $current_path
-   *   The current path.
-   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
-   *   The request stack.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The configuration factory.
+   * @param \Drupal\Core\Routing\RedirectDestinationInterface $redirect_destination
+   *   The redirect destination service.
    */
-  public function __construct(CurrentPathStack $current_path, RequestStack $request_stack) {
-    $this->currentPath = $current_path;
-    $this->requestStack = $request_stack;
+  public function __construct(ConfigFactoryInterface $config_factory, RedirectDestinationInterface $redirect_destination) {
+    $this->configFactory = $config_factory;
+    $this->redirectDestination = $redirect_destination;
   }
 
   /**
@@ -43,21 +43,22 @@ class OpenIDConnectSession {
    * @todo Evaluate, whether we can now use the user.private_tempstore instead
    *   of the global $_SESSION variable, as https://www.drupal.org/node/2743931
    *   has been applied to 8.5+ core.
+   *
+   * @see \Drupal\openid_connect\Controller\OpenIDConnectRedirectController::authenticate()
    */
   public function saveDestination() {
-    $current_path = $this->currentPath->getPath();
-    $path = ($current_path == '/user/login') ? '/user' : $current_path;
+    // If the current request includes a 'destination' query parameter we'll use
+    // that in the redirection. Otherwise use the current request path and
+    // query.
+    $destination = ltrim($this->redirectDestination->get(), '/');
 
-    // The destination could contain query parameters. Ensure that they are
-    // preserved.
-    $query = $this->requestStack->getCurrentRequest()->getQueryString();
+    // Don't redirect to user/login. In this case redirect to the user profile.
+    if (strpos($destination, 'user/login') === 0) {
+      $redirect_login = $this->configFactory->get('openid_connect.settings')->get('redirect_login');
+      $destination = $redirect_login ?: 'user';
+    }
 
-    $_SESSION['openid_connect_destination'] = [
-      $path,
-      [
-        'query' => $query,
-      ],
-    ];
+    $_SESSION['openid_connect_destination'] = $destination;
   }
 
 }

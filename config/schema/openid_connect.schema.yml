@@ -14,6 +14,9 @@ openid_connect.settings:
     user_login_display:
       type: string
       label: 'Show external providers in user login form'
+    redirect_login:
+      type: string
+      label: 'Redirect on login'
     userinfo_mappings:
       type: sequence
       label: 'User claims mapping'
