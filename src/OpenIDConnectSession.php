@@ -11,7 +11,7 @@ use Drupal\Core\Routing\RedirectDestinationInterface;
 class OpenIDConnectSession {
 
   /**
-   * Drupal\Core\Config\ConfigFactory definition.
+   * The config factory.
    *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
@@ -28,7 +28,7 @@ class OpenIDConnectSession {
    * Construct an instance of the OpenID Connect session service.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The configuration factory.
+   *   The config factory.
    * @param \Drupal\Core\Routing\RedirectDestinationInterface $redirect_destination
    *   The redirect destination service.
    */

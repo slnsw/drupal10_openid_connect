@@ -2,9 +2,9 @@
 
 namespace Drupal\openid_connect;
 
-use Drupal\Core\Config\ConfigFactory;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
-use Drupal\Core\Extension\ModuleHandler;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -18,16 +18,16 @@ class OpenIDConnectClaims implements ContainerInjectionInterface {
   use StringTranslationTrait;
 
   /**
-   * Drupal\Core\Config\ConfigFactory definition.
+   * The config factory.
    *
-   * @var \Drupal\Core\Config\ConfigFactory
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $configFactory;
 
   /**
-   * Drupal\Core\Extension\ModuleHandler definition.
+   * The module handler.
    *
-   * @var \Drupal\Core\Extension\ModuleHandler
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
    */
   protected $moduleHandler;
 
@@ -46,18 +46,14 @@ class OpenIDConnectClaims implements ContainerInjectionInterface {
   protected $defaultScopes = ['openid', 'email'];
 
   /**
-   * The constructor.
+   * Constructs an OpenID Connect claims service instance.
    *
-   * @param \Drupal\Core\Config\ConfigFactory $config_factory
-   *   The configuration factory.
-   * @param \Drupal\Core\Extension\ModuleHandler $module_handler
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler.
    */
-  public function __construct(
-    ConfigFactory $config_factory,
-    ModuleHandler $module_handler
-  ) {
-
+  public function __construct(ConfigFactoryInterface $config_factory, ModuleHandlerInterface $module_handler) {
     $this->configFactory = $config_factory;
     $this->moduleHandler = $module_handler;
   }

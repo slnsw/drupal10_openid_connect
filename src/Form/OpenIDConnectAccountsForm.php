@@ -178,19 +178,22 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
     /** @var \Drupal\openid_connect\OpenIDConnectClientEntityInterface $entity */
     $client = $this->entityTypeManager->getStorage('openid_connect_client')->loadByProperties(['id' => $client_name])[$client_name];
 
-    if ($op === 'disconnect') {
-      $this->authmap->deleteAssociation($form_state->get('account')->id(), $client_name);
-      $this->messenger()->addMessage($this->t('Account successfully disconnected from @client.', ['@client' => $client->label()]));
-    }
-    else {
-      $this->session->saveDestination();
+    switch ($op) {
+      case 'disconnect':
+        $this->authmap->deleteAssociation($form_state->get('account')->id(), $client_name);
+        $this->messenger()->addMessage($this->t('Account successfully disconnected from @client.', ['@client' => $client->label()]));
+        break;
 
-      $plugin = $entity->getPlugin();
-      $scopes = $this->claims->getScopes($plugin);
-      $_SESSION['openid_connect_op'] = $op;
-      $_SESSION['openid_connect_connect_uid'] = $this->currentUser->id();
-      $response = $plugin->authorize($scopes);
-      $form_state->setResponse($response);
+      case 'connect':
+        $this->session->saveDestination();
+
+        $plugin = $entity->getPlugin();
+        $scopes = $this->claims->getScopes($plugin);
+        $_SESSION['openid_connect_op'] = 'connect';
+        $_SESSION['openid_connect_connect_uid'] = $this->currentUser->id();
+        $response = $plugin->authorize($scopes);
+        $form_state->setResponse($response);
+        break;
     }
   }
 
