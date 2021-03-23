@@ -3,7 +3,6 @@
 namespace Drupal\openid_connect\Form;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -16,7 +15,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @package Drupal\openid_connect\Form
  */
-class OpenIDConnectSettingsForm extends ConfigFormBase implements ContainerInjectionInterface {
+class OpenIDConnectSettingsForm extends ConfigFormBase {
 
   /**
    * The OpenID Connect service.

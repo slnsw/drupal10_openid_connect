@@ -3,13 +3,15 @@
 namespace Drupal\openid_connect;
 
 use Drupal\Component\Utility\Crypt;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Creates and validates state tokens.
  *
  * @package Drupal\openid_connect
  */
-class OpenIDConnectStateToken implements OpenIDConnectStateTokenInterface {
+class OpenIDConnectStateToken implements OpenIDConnectStateTokenInterface, ContainerInjectionInterface {
 
   /**
    * The OpenID Connect session service.
@@ -26,6 +28,15 @@ class OpenIDConnectStateToken implements OpenIDConnectStateTokenInterface {
    */
   public function __construct(OpenIDConnectSessionInterface $session) {
     $this->session = $session;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container): OpenIDConnectStateToken {
+    return new static(
+      $container->get('openid_connect.session')
+    );
   }
 
   /**

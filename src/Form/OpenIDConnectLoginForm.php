@@ -2,7 +2,6 @@
 
 namespace Drupal\openid_connect\Form;
 
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -15,7 +14,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @package Drupal\openid_connect\Form
  */
-class OpenIDConnectLoginForm extends FormBase implements ContainerInjectionInterface {
+class OpenIDConnectLoginForm extends FormBase {
 
   /**
    * The entity type manager.
