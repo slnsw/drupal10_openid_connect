@@ -314,7 +314,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
         'response_type' => 'code',
         'scope' => $scope,
         'redirect_uri' => $redirect_uri->getGeneratedUrl(),
-        'state' => $this->stateToken->create(),
+        'state' => $this->stateToken->generateToken(),
       ],
     ];
   }

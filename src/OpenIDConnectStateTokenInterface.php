@@ -15,7 +15,7 @@ interface OpenIDConnectStateTokenInterface {
    * @return string
    *   A state token that later can be validated to prevent request forgery.
    */
-  public function create(): string;
+  public function generateToken(): string;
 
   /**
    * Confirms anti-forgery state token.

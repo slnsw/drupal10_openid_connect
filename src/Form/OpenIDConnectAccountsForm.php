@@ -11,9 +11,9 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountProxy;
-use Drupal\openid_connect\OpenIDConnectSession;
 use Drupal\openid_connect\OpenIDConnectAuthmap;
 use Drupal\openid_connect\OpenIDConnectClaims;
+use Drupal\openid_connect\OpenIDConnectSessionInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -40,7 +40,7 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
   /**
    * The OpenID Connect session service.
    *
-   * @var \Drupal\openid_connect\OpenIDConnectSession
+   * @var \Drupal\openid_connect\OpenIDConnectSessionInterface
    */
   protected $session;
 
@@ -71,10 +71,10 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
    *   The authmap storage.
    * @param \Drupal\openid_connect\OpenIDConnectClaims $claims
    *   The OpenID Connect claims.
-   * @param \Drupal\openid_connect\OpenIDConnectSession $session
-   *   The OpenID Connect service.
+   * @param \Drupal\openid_connect\OpenIDConnectSessionInterface $session
+   *   The OpenID Connect session service.
    */
-  public function __construct(ConfigFactory $config_factory, EntityTypeManagerInterface $entity_type_manager, AccountProxy $current_user, OpenIDConnectAuthmap $authmap, OpenIDConnectClaims $claims, OpenIDConnectSession $session) {
+  public function __construct(ConfigFactory $config_factory, EntityTypeManagerInterface $entity_type_manager, AccountProxy $current_user, OpenIDConnectAuthmap $authmap, OpenIDConnectClaims $claims, OpenIDConnectSessionInterface $session) {
     $this->setConfigFactory($config_factory);
     $this->entityTypeManager = $entity_type_manager;
     $this->currentUser = $current_user;
@@ -189,8 +189,7 @@ class OpenIDConnectAccountsForm extends FormBase implements ContainerInjectionIn
 
         $plugin = $entity->getPlugin();
         $scopes = $this->claims->getScopes($plugin);
-        $_SESSION['openid_connect_op'] = 'connect';
-        $_SESSION['openid_connect_connect_uid'] = $this->currentUser->id();
+        $this->session->saveOp('connect', $this->currentUser->id());
         $response = $plugin->authorize($scopes);
         $form_state->setResponse($response);
         break;

@@ -17,11 +17,11 @@ services:
 
   openid_connect.state_token:
     class: Drupal\openid_connect\OpenIDConnectStateToken
-    arguments: []
+    arguments: ['@openid_connect.session']
 
   openid_connect.session:
     class: Drupal\openid_connect\OpenIDConnectSession
-    arguments: ['@config.factory', '@redirect.destination']
+    arguments: ['@config.factory', '@redirect.destination', '@session']
 
   openid_connect.autodiscover:
     class: Drupal\openid_connect\OpenIDConnectAutoDiscover

@@ -4,11 +4,13 @@ namespace Drupal\openid_connect;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Routing\RedirectDestinationInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
  * Session service of the OpenID Connect module.
  */
-class OpenIDConnectSession {
+class OpenIDConnectSession implements OpenIDConnectSessionInterface {
 
   /**
    * The config factory.
@@ -25,26 +27,50 @@ class OpenIDConnectSession {
   protected $redirectDestination;
 
   /**
+   * The session object.
+   *
+   * @var \Symfony\Component\HttpFoundation\Session\SessionInterface
+   */
+  protected $session;
+
+  /**
    * Construct an instance of the OpenID Connect session service.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
    * @param \Drupal\Core\Routing\RedirectDestinationInterface $redirect_destination
    *   The redirect destination service.
+   * @param \Symfony\Component\HttpFoundation\Session\SessionInterface $session
+   *   The session object.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, RedirectDestinationInterface $redirect_destination) {
+  public function __construct(ConfigFactoryInterface $config_factory, RedirectDestinationInterface $redirect_destination, SessionInterface $session) {
     $this->configFactory = $config_factory;
     $this->redirectDestination = $redirect_destination;
+    $this->session = $session;
   }
 
   /**
-   * Save the current path in the session, for redirecting after authorization.
-   *
-   * @todo Evaluate, whether we can now use the user.private_tempstore instead
-   *   of the global $_SESSION variable, as https://www.drupal.org/node/2743931
-   *   has been applied to 8.5+ core.
-   *
-   * @see \Drupal\openid_connect\Controller\OpenIDConnectRedirectController::authenticate()
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container): OpenIDConnectSession {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('redirect.destination'),
+      $container->get('session')
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function retrieveDestination() : ?string {
+    $ret = $this->session->get('openid_connect_destination');
+    $this->session->remove('openid_connect_destination');
+    return $ret;
+  }
+
+  /**
+   * {@inheritdoc}
    */
   public function saveDestination() {
     // If the current request includes a 'destination' query parameter we'll use
@@ -58,7 +84,47 @@ class OpenIDConnectSession {
       $destination = $redirect_login ?: 'user';
     }
 
-    $_SESSION['openid_connect_destination'] = $destination;
+    $this->session->set('openid_connect_destination', $destination);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function retrieveOp(): array {
+    $ret = [
+      'op' => $this->session->get('openid_connect_op'),
+      'uid' => $this->session->get('openid_connect_uid'),
+    ];
+    $this->session->remove('openid_connect_op');
+    $this->session->remove('openid_connect_uid');
+
+    return $ret;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function saveOp(string $op, int $uid = NULL) {
+    $this->session->set('openid_connect_op', $op);
+    if (isset($uid)) {
+      $this->session->set('openid_connect_uid', $uid);
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function retrieveStateToken() : ?string {
+    $ret = $this->session->get('openid_connect_state');
+    $this->session->remove('openid_connect_state');
+    return $ret;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function saveStateToken(string $state) {
+    $this->session->set('openid_connect_state', $state);
   }
 
 }

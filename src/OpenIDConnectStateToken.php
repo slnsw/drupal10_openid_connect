@@ -12,11 +12,28 @@ use Drupal\Component\Utility\Crypt;
 class OpenIDConnectStateToken implements OpenIDConnectStateTokenInterface {
 
   /**
+   * The OpenID Connect session service.
+   *
+   * @var \Drupal\openid_connect\OpenIDConnectSessionInterface
+   */
+  protected $session;
+
+  /**
+   * Construct an instance of the OpenID Connect state token service.
+   *
+   * @param \Drupal\openid_connect\OpenIDConnectSessionInterface $session
+   *   The OpenID Connect session service.
+   */
+  public function __construct(OpenIDConnectSessionInterface $session) {
+    $this->session = $session;
+  }
+
+  /**
    * {@inheritdoc}
    */
-  public function create(): string {
+  public function generateToken(): string {
     $state = Crypt::randomBytesBase64();
-    $_SESSION['openid_connect_state'] = $state;
+    $this->session->saveStateToken($state);
     return $state;
   }
 
@@ -24,8 +41,8 @@ class OpenIDConnectStateToken implements OpenIDConnectStateTokenInterface {
    * {@inheritdoc}
    */
   public function confirm(string $state_token): bool {
-    return isset($_SESSION['openid_connect_state']) &&
-      $state_token == $_SESSION['openid_connect_state'];
+    $state = $this->session->retrieveStateToken();
+    return !empty($state) && ($state_token == $state);
   }
 
 }

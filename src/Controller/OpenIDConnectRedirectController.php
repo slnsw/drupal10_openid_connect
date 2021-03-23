@@ -4,11 +4,13 @@ namespace Drupal\openid_connect\Controller;
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Url;
 use Drupal\openid_connect\OpenIDConnectClientEntityInterface;
+use Drupal\openid_connect\OpenIDConnectSessionInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
 use Drupal\openid_connect\OpenIDConnect;
 use Drupal\openid_connect\OpenIDConnectStateTokenInterface;
@@ -54,6 +56,20 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   protected $openIDConnect;
 
   /**
+   * The OpenID Connect session service.
+   *
+   * @var \Drupal\openid_connect\OpenIDConnectSessionInterface
+   */
+  protected $session;
+
+  /**
+   * The config factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
+
+  /**
    * The constructor.
    *
    * @param \Drupal\openid_connect\OpenIDConnect $openid_connect
@@ -64,12 +80,18 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    *   The request stack.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger factory.
+   * @param \Drupal\openid_connect\OpenIDConnectSessionInterface $session
+   *   The OpenID Connect session service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
    */
-  public function __construct(OpenIDConnect $openid_connect, OpenIDConnectStateTokenInterface $state_token, RequestStack $request_stack, LoggerChannelFactoryInterface $logger_factory) {
+  public function __construct(OpenIDConnect $openid_connect, OpenIDConnectStateTokenInterface $state_token, RequestStack $request_stack, LoggerChannelFactoryInterface $logger_factory, OpenIDConnectSessionInterface $session, ConfigFactoryInterface $config_factory) {
     $this->openIDConnect = $openid_connect;
     $this->stateToken = $state_token;
     $this->requestStack = $request_stack;
     $this->loggerFactory = $logger_factory;
+    $this->session = $session;
+    $this->configFactory = $config_factory;
   }
 
   /**
@@ -80,7 +102,9 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
       $container->get('openid_connect.openid_connect'),
       $container->get('openid_connect.state_token'),
       $container->get('request_stack'),
-      $container->get('logger.factory')
+      $container->get('logger.factory'),
+      $container->get('openid_connect.session'),
+      $container->get('config.factory')
     );
   }
 
@@ -116,22 +140,14 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   public function authenticate(OpenIDConnectClientEntityInterface $openid_connect_client): RedirectResponse {
     $request = $this->requestStack->getCurrentRequest();
 
-    // Delete the state token, since it's already been confirmed.
-    unset($_SESSION['openid_connect_state']);
-
     // Get parameters from the session, and then clean up.
-    $parameters = [
-      'destination' => 'user',
-      'op' => 'login',
-      'connect_uid' => NULL,
-    ];
-    foreach ($parameters as $key => $default) {
-      if (isset($_SESSION['openid_connect_' . $key])) {
-        $parameters[$key] = $_SESSION['openid_connect_' . $key];
-        unset($_SESSION['openid_connect_' . $key]);
-      }
+    list($op, $uid) = $this->session->retrieveOp();
+    if (!isset($op)) {
+      $op = 'login';
+      $uid = NULL;
     }
-    $destination = $parameters['destination'];
+
+    $destination = $this->session->retrieveDestination() ?: $this->configFactory->get('openid_connect.settings')->get('redirect_login');
 
     $plugin = $openid_connect_client->getPlugin();
     if (!$request->get('error') && (!($plugin instanceof OpenIDConnectClientInterface) || !$request->get('code'))) {
@@ -169,7 +185,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
       // Process the login or connect operations.
       $tokens = $plugin->retrieveTokens($request->get('code'));
       if ($tokens) {
-        if ($parameters['op'] === 'login') {
+        if ($op === 'login') {
           $success = $this->openIDConnect->completeAuthorization($plugin, $tokens, $destination);
 
           if (!$success) {
@@ -195,7 +211,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
             }
           }
         }
-        elseif ($parameters['op'] === 'connect' && $parameters['connect_uid'] === $this->currentUser()->id()) {
+        elseif (($op === 'connect') && ($uid === $this->currentUser()->id())) {
           $success = $this->openIDConnect->connectCurrentUser($plugin, $tokens);
           if ($success) {
             $this->messenger()->addMessage($this->t('Account successfully connected with @provider.', $provider_param));

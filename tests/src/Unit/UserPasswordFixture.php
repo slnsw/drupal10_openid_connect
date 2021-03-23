@@ -26,7 +26,6 @@ function user_password(): string {
  *   The user account.
  */
 function user_login_finalize(UserInterface $account) {
-  $_SESSION['uid'] = $account->id();
 }
 
 /**

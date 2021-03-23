@@ -6,8 +6,8 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\openid_connect\OpenIDConnectSession;
 use Drupal\openid_connect\OpenIDConnectClaims;
+use Drupal\openid_connect\OpenIDConnectSessionInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -34,7 +34,7 @@ class OpenIDConnectLoginForm extends FormBase implements ContainerInjectionInter
   /**
    * The OpenID Connect session service.
    *
-   * @var \Drupal\openid_connect\OpenIDConnectSession
+   * @var \Drupal\openid_connect\OpenIDConnectSessionInterface
    */
   protected $session;
 
@@ -45,10 +45,10 @@ class OpenIDConnectLoginForm extends FormBase implements ContainerInjectionInter
    *   The entity type manager.
    * @param \Drupal\openid_connect\OpenIDConnectClaims $claims
    *   The OpenID Connect claims.
-   * @param \Drupal\openid_connect\OpenIDConnectSession $session
+   * @param \Drupal\openid_connect\OpenIDConnectSessionInterface $session
    *   The OpenID Connect session service.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, OpenIDConnectClaims $claims, OpenIDConnectSession $session) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, OpenIDConnectClaims $claims, OpenIDConnectSessionInterface $session) {
     $this->entityTypeManager = $entity_type_manager;
     $this->claims = $claims;
     $this->session = $session;
@@ -103,7 +103,7 @@ class OpenIDConnectLoginForm extends FormBase implements ContainerInjectionInter
     $client = $this->entityTypeManager->getStorage('openid_connect_client')->loadByProperties(['id' => $client_name])[$client_name];
     $plugin = $client->getPlugin();
     $scopes = $this->claims->getScopes($plugin);
-    $_SESSION['openid_connect_op'] = 'login';
+    $this->session->saveOp('login');
     $response = $plugin->authorize($scopes);
     $form_state->setResponse($response);
   }

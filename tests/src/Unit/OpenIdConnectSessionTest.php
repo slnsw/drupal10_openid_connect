@@ -9,6 +9,7 @@ use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Routing\RedirectDestinationInterface;
 use Drupal\openid_connect\OpenIDConnectSession;
 use Drupal\Tests\UnitTestCase;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
  * @coversDefaultClass \Drupal\openid_connect\OpenIDConnectSession
@@ -46,6 +47,13 @@ class OpenIdConnectSessionTest extends UnitTestCase {
   protected $redirectDestination;
 
   /**
+   * A mock of the session service.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
+  protected $session;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
@@ -53,35 +61,40 @@ class OpenIdConnectSessionTest extends UnitTestCase {
 
     // Mock the configuration factory service.
     $this->configFactory = $this->createMock(ConfigFactoryInterface::class);
-
     // Mock the 'redirect.destination' service.
     $this->redirectDestination = $this->createMock(RedirectDestinationInterface::class);
+    // Mock the 'session' service.
+    $this->session = $this->createMock(SessionInterface::class);
   }
 
   /**
-   * Test the save destination method.
+   * Test the saveDestination method.
    */
   public function testSaveDestination(): void {
-    // Get the expected session array.
-    $expectedSession = $this->getExpectedSessionArray(
-      self::TEST_PATH,
-      self::TEST_QUERY
-    );
+    // Get the expected destination.
+    $expectedDestination = self::TEST_PATH . '?' . self::TEST_QUERY;
 
-    $destination = self::TEST_PATH . '?' . self::TEST_QUERY;
     // Mock the get method for the 'redirect.destination' service.
     $this->redirectDestination->expects($this->once())
       ->method('get')
-      ->willReturn($destination);
+      ->willReturn($expectedDestination);
+
+    // Mock the get method for the 'session' service.
+    $this->session->expects($this->once())
+      ->method('get')
+      ->willReturn($expectedDestination);
 
     // Create a new OpenIDConnectSession class.
-    $session = new OpenIDConnectSession($this->configFactory, $this->redirectDestination);
+    $session = new OpenIDConnectSession($this->configFactory, $this->redirectDestination, $this->session);
 
     // Call the saveDestination() method.
     $session->saveDestination();
 
-    // Assert the $_SESSOIN global matches our expectation.
-    $this->assertEquals($expectedSession, $_SESSION);
+    // Call the retrieveDestination method.
+    $destination = $session->retrieveDestination();
+
+    // Assert the destination matches our expectation.
+    $this->assertEquals($expectedDestination, $destination);
   }
 
   /**
@@ -89,9 +102,7 @@ class OpenIdConnectSessionTest extends UnitTestCase {
    */
   public function testSaveDestinationUserPath(): void {
     // Setup our expected results.
-    $expectedSession = $this->getExpectedSessionArray(
-      'user'
-    );
+    $expectedDestination = 'user';
 
     $immutableConfig = $this
       ->createMock(ImmutableConfig::class);
@@ -106,36 +117,22 @@ class OpenIdConnectSessionTest extends UnitTestCase {
       ->method('get')
       ->willReturn(self::TEST_USER_PATH);
 
+    // Mock the get method for the 'session' service.
+    $this->session->expects($this->once())
+      ->method('get')
+      ->willReturn($expectedDestination);
+
     // Create a class to test with.
-    $session = new OpenIDConnectSession($this->configFactory, $this->redirectDestination);
+    $session = new OpenIDConnectSession($this->configFactory, $this->redirectDestination, $this->session);
 
     // Call the saveDestination method.
     $session->saveDestination();
 
-    // Assert the $_SESSION matches our expectations.
-    $this->assertEquals($expectedSession, $_SESSION);
-  }
+    // Call the retrieveDestination method.
+    $destination = $session->retrieveDestination();
 
-  /**
-   * Get the expected session array to compare.
-   *
-   * @param string $path
-   *   The path that is expected in the session global.
-   * @param string $queryString
-   *   The query string that is expected in the session global.
-   *
-   * @return array
-   *   The expected session array.
-   */
-  private function getExpectedSessionArray(string $path, string $queryString = ''): array {
-    $destination = $path;
-    if ($queryString) {
-      $destination .= '?' . $queryString;
-    }
-
-    return [
-      'openid_connect_destination' => ltrim($destination, '/'),
-    ];
+    // Assert the destination matches our expectations.
+    $this->assertEquals($expectedDestination, $destination);
   }
 
 }
