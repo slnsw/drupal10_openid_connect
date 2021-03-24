@@ -10,6 +10,9 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountProxy;
+use Drupal\externalauth\AuthmapInterface;
+use Drupal\externalauth\ExternalAuth;
+use Drupal\externalauth\ExternalAuthInterface;
 use Drupal\openid_connect\OpenIDConnectAuthmap;
 use Drupal\openid_connect\OpenIDConnectClaims;
 use Drupal\openid_connect\OpenIDConnectSessionInterface;
@@ -46,7 +49,7 @@ class OpenIDConnectAccountsForm extends FormBase {
   /**
    * The OpenID Connect authmap service.
    *
-   * @var \Drupal\openid_connect\OpenIDConnectAuthmap
+   * @var \Drupal\externalauth\AuthmapInterface
    */
   protected $authmap;
 
@@ -66,14 +69,14 @@ class OpenIDConnectAccountsForm extends FormBase {
    *   The entity type manager.
    * @param \Drupal\Core\Session\AccountProxy $current_user
    *   The current user account.
-   * @param \Drupal\openid_connect\OpenIDConnectAuthmap $authmap
+   * @param \Drupal\externalauth\AuthmapInterface $authmap
    *   The authmap storage.
    * @param \Drupal\openid_connect\OpenIDConnectClaims $claims
    *   The OpenID Connect claims.
    * @param \Drupal\openid_connect\OpenIDConnectSessionInterface $session
    *   The OpenID Connect session service.
    */
-  public function __construct(ConfigFactory $config_factory, EntityTypeManagerInterface $entity_type_manager, AccountProxy $current_user, OpenIDConnectAuthmap $authmap, OpenIDConnectClaims $claims, OpenIDConnectSessionInterface $session) {
+  public function __construct(ConfigFactory $config_factory, EntityTypeManagerInterface $entity_type_manager, AccountProxy $current_user, AuthmapInterface $authmap, OpenIDConnectClaims $claims, OpenIDConnectSessionInterface $session) {
     $this->setConfigFactory($config_factory);
     $this->entityTypeManager = $entity_type_manager;
     $this->currentUser = $current_user;
@@ -90,7 +93,7 @@ class OpenIDConnectAccountsForm extends FormBase {
       $container->get('config.factory'),
       $container->get('entity_type.manager'),
       $container->get('current_user'),
-      $container->get('openid_connect.authmap'),
+      $container->get('externalauth.authmap'),
       $container->get('openid_connect.claims'),
       $container->get('openid_connect.session')
     );
@@ -125,7 +128,7 @@ class OpenIDConnectAccountsForm extends FormBase {
       $form['help']['#markup'] = $this->t('You can connect your account with these external providers.');
     }
 
-    $connected_accounts = $this->authmap->getConnectedAccounts($user);
+    $connected_accounts = $this->authmap->getAll($user->id());
 
     foreach ($clients as $client) {
       $id = $client->getPluginId();
@@ -179,7 +182,7 @@ class OpenIDConnectAccountsForm extends FormBase {
 
     switch ($op) {
       case 'disconnect':
-        $this->authmap->deleteAssociation($form_state->get('account')->id(), $client_name);
+        $this->authmap->delete($form_state->get('account')->id(), $client_name);
         $this->messenger()->addMessage($this->t('Account successfully disconnected from @client.', ['@client' => $client->label()]));
         break;
 

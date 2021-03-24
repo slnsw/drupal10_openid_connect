@@ -141,11 +141,9 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
     $request = $this->requestStack->getCurrentRequest();
 
     // Get parameters from the session, and then clean up.
-    list($op, $uid) = $this->session->retrieveOp();
-    if (!isset($op)) {
-      $op = 'login';
-      $uid = NULL;
-    }
+    $params = $this->session->retrieveOp();
+    $op = $params['op'] ?? 'login';
+    $uid = $params['uid'] ?? NULL;
 
     $destination = $this->session->retrieveDestination() ?: $this->configFactory->get('openid_connect.settings')->get('redirect_login');
 

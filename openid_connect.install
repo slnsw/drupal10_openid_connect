@@ -6,56 +6,6 @@
  */
 
 /**
- * Implements hook_schema().
- */
-function openid_connect_schema(): array {
-  $schema['openid_connect_authmap'] = [
-    'description' => 'Stores OpenID Connect authentication mapping.',
-    'fields' => [
-      'aid' => [
-        'description' => 'Primary Key: Unique authmap ID.',
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ],
-      'uid' => [
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-        'description' => "User's {users}.uid.",
-      ],
-      'client_name' => [
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-        'description' => 'The client name.',
-      ],
-      'sub' => [
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-        'description' => 'Unique subject identifier.',
-      ],
-    ],
-    'primary key' => ['aid'],
-    'indexes' => [
-      'uid' => ['uid'],
-      'identifier' => ['client_name', 'sub'],
-    ],
-    'foreign keys' => [
-      'user' => [
-        'table' => 'users',
-        'columns' => ['uid' => 'uid'],
-      ],
-    ],
-  ];
-
-  return $schema;
-}
-
-/**
  * Add default config for Facebook and LinkedIn provider.
  */
 function openid_connect_update_8101() {
@@ -198,4 +148,39 @@ function openid_connect_update_8202() {
   $config = $config_factory->getEditable('openid_connect.settings');
   $config->set('redirect_login', 'user');
   $config->save(TRUE);
+}
+
+/**
+ * Enable externalauth.
+ */
+function openid_connect_update_8203() {
+  \Drupal::service('module_installer')->install(['externalauth']);
+}
+
+/**
+ * Move all 'openid_connect_authmap' data to 'authmap'.
+ */
+function openid_connect_update_8204() {
+  $database = \Drupal::database();
+
+  // Get all records and move them to the authmap table.
+  $query = $database->select('openid_connect_authmap', 'a')->fields('a');
+  $authmap_records = $query->execute()->fetchAllAssoc('aid');
+
+  foreach($authmap_records as $authmap_record) {
+    $database->insert('authmap')
+      ->fields(['uid', 'provider', 'authname'])
+      ->values([
+        'uid' => $authmap_record->uid,
+        'provider' => $authmap_record->client_name,
+        'authname' => $authmap_record->sub,
+      ])->execute();
+  }
+}
+
+/**
+ * Drop the 'openid_connect_authmap' table.
+ */
+function openid_connect_update_8205() {
+  \Drupal::database()->schema()->dropTable('openid_connect_authmap');
 }

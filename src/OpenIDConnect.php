@@ -2,21 +2,23 @@
 
 namespace Drupal\openid_connect;
 
+use Drupal\Component\Utility\EmailValidatorInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\externalauth\AuthmapInterface;
+use Drupal\externalauth\ExternalAuthInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
 use Drupal\user\UserDataInterface;
 use Drupal\user\UserInterface;
-use Drupal\Component\Utility\EmailValidatorInterface;
 
 /**
  * Main service of the OpenID Connect module.
@@ -32,11 +34,18 @@ class OpenIDConnect {
   protected $configFactory;
 
   /**
-   * The OpenID Connect authmap service.
+   * The external authmap service.
    *
-   * @var \Drupal\openid_connect\OpenIDConnectAuthmap
+   * @var \Drupal\externalauth\AuthmapInterface
    */
   protected $authmap;
+
+  /**
+   * The external auth.
+   *
+   * @var \Drupal\externalauth\ExternalAuthInterface
+   */
+  protected $externalAuth;
 
   /**
    * The entity field manager.
@@ -106,8 +115,10 @@ class OpenIDConnect {
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
-   * @param \Drupal\openid_connect\OpenIDConnectAuthmap $authmap
-   *   The OpenID Connect authmap service.
+   * @param \Drupal\externalauth\AuthmapInterface $authmap
+   *   The external authmap service.
+   * @param \Drupal\externalauth\ExternalAuthInterface $external_auth
+   *   The external auth service.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity manager.
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager
@@ -132,7 +143,8 @@ class OpenIDConnect {
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
-    OpenIDConnectAuthmap $authmap,
+    AuthmapInterface $authmap,
+    ExternalAuthInterface $external_auth,
     EntityTypeManagerInterface $entity_type_manager,
     EntityFieldManagerInterface $entity_field_manager,
     AccountProxyInterface $current_user,
@@ -145,6 +157,7 @@ class OpenIDConnect {
   ) {
     $this->configFactory = $config_factory;
     $this->authmap = $authmap;
+    $this->externalAuth = $external_auth;
     $this->userStorage = $entity_type_manager->getStorage('user');
     $this->entityFieldManager = $entity_field_manager;
     $this->currentUser = $current_user;
@@ -259,7 +272,7 @@ class OpenIDConnect {
     }
 
     /** @var \Drupal\user\UserInterface|bool $account */
-    $account = $this->authmap->userLoadBySub($sub, $provider);
+    $account = $this->externalAuth->load($sub, $provider);
     $context = [
       'tokens' => $tokens,
       'plugin_id' => $provider,
@@ -343,7 +356,7 @@ class OpenIDConnect {
           ->get('connect_existing_users');
         if ($connect_existing_users) {
           // Connect existing user account with this sub.
-          $this->authmap->createAssociation($account, $client->getPluginId(), $context['sub']);
+          $this->externalAuth->linkExistingAccount($context['sub'], $client->getPluginId(), $account);
         }
         else {
           $this->messenger->addError($this->t('The e-mail address is already taken: @email', [
@@ -386,7 +399,7 @@ class OpenIDConnect {
 
       // Store the newly created account.
       $this->saveUserinfo($account, $context + ['is_new' => TRUE]);
-      $this->authmap->createAssociation($account, $client->getPluginId(), $context['sub']);
+      $this->externalAuth->linkExistingAccount($context['sub'], $client->getPluginId(), $account);
     }
 
     // Whether the user should not be logged in due to pending administrator
@@ -444,7 +457,7 @@ class OpenIDConnect {
 
     if ($account === FALSE) {
       $account = $this->userStorage->load($this->currentUser->id());
-      $this->authmap->createAssociation($account, $client->getPluginId(), $context['sub']);
+      $this->externalAuth->linkExistingAccount($context['sub'], $client->getPluginId(), $account);
     }
 
     $always_save_userinfo = $this->configFactory->get('openid_connect.settings')->get('always_save_userinfo');
@@ -482,7 +495,7 @@ class OpenIDConnect {
       return TRUE;
     }
 
-    $connected_accounts = $this->authmap->getConnectedAccounts($account);
+    $connected_accounts = $this->authmap->getAll($account->id());
 
     return empty($connected_accounts);
   }

@@ -66,7 +66,8 @@ function openid_connect_entity_property_info_alter(&$info) {
  */
 function openid_connect_user_insert(EntityInterface $entity) {
   if (isset($entity->openid_connect_client) && isset($entity->openid_connect_sub)) {
-    \Drupal::service('openid_connect.authmap')->createAssociation($entity, $entity->openid_connect_client, $entity->openid_connect_sub);
+    $authmap = \Drupal::service('externalauth.authmap');
+    $authmap->linkExistingAccount($entity->openid_connect_sub, $entity->openid_connect_client, $entity);
   }
 }
 
@@ -74,16 +75,8 @@ function openid_connect_user_insert(EntityInterface $entity) {
  * Implements hook_user_cancel().
  */
 function openid_connect_user_cancel($edit, $account, $method) {
-  $authmap = \Drupal::service('openid_connect.authmap');
-  $authmap->deleteAssociation($account->id());
-}
-
-/**
- * Implements hook_ENTITY_TYPE_delete() for user.
- */
-function openid_connect_user_delete(EntityInterface $entity) {
-  $authmap = \Drupal::service('openid_connect.authmap');
-  $authmap->deleteAssociation($entity->id());
+  $authmap = \Drupal::service('externalauth.authmap');
+  $authmap->delete($account->id());
 }
 
 /**
