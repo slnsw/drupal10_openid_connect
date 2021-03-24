@@ -131,7 +131,7 @@ class OpenIDConnectAccountsForm extends FormBase {
     $connected_accounts = $this->authmap->getAll($user->id());
 
     foreach ($clients as $client) {
-      $id = $client->getPluginId();
+      $id = $client->id();
       $label = $client->label();
 
       $form[$id] = [
@@ -189,7 +189,7 @@ class OpenIDConnectAccountsForm extends FormBase {
       case 'connect':
         $this->session->saveDestination();
 
-        $plugin = $entity->getPlugin();
+        $plugin = $client->getPlugin();
         $scopes = $this->claims->getScopes($plugin);
         $this->session->saveOp('connect', $this->currentUser->id());
         $response = $plugin->authorize($scopes);

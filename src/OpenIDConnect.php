@@ -16,7 +16,6 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\externalauth\AuthmapInterface;
 use Drupal\externalauth\ExternalAuthInterface;
-use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
 use Drupal\user\UserDataInterface;
 use Drupal\user\UserInterface;
 
@@ -234,7 +233,7 @@ class OpenIDConnect {
   /**
    * Fill the context array.
    *
-   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface $client
+   * @param \Drupal\openid_connect\OpenIDConnectClientEntityInterface $client
    *   The client.
    * @param array $tokens
    *   The tokens as returned by OpenIDConnectClientInterface::retrieveTokens().
@@ -242,9 +241,10 @@ class OpenIDConnect {
    * @return array|bool
    *   Context array or FALSE if an error was raised.
    */
-  private function buildContext(OpenIDConnectClientInterface $client, array $tokens) {
-    $user_data = $client->decodeIdToken($tokens['id_token']);
-    $userinfo = $client->retrieveUserInfo($tokens['access_token']);
+  private function buildContext(OpenIDConnectClientEntityInterface $client, array $tokens) {
+    $plugin = $client->getPlugin();
+    $user_data = $plugin->decodeIdToken($tokens['id_token']);
+    $userinfo = $plugin->retrieveUserInfo($tokens['access_token']);
     $provider = $client->getPluginId();
 
     $context = [
@@ -306,7 +306,7 @@ class OpenIDConnect {
   /**
    * Complete the authorization after tokens have been retrieved.
    *
-   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface $client
+   * @param \Drupal\openid_connect\OpenIDConnectClientEntityInterface $client
    *   The client.
    * @param array $tokens
    *   The tokens as returned by OpenIDConnectClientInterface::retrieveTokens().
@@ -318,7 +318,7 @@ class OpenIDConnect {
    *
    * @throws \Exception
    */
-  public function completeAuthorization(OpenIDConnectClientInterface $client, array $tokens, &$destination): bool {
+  public function completeAuthorization(OpenIDConnectClientEntityInterface $client, array $tokens, &$destination): bool {
     if ($this->currentUser->isAuthenticated()) {
       throw new \RuntimeException('User already logged in');
     }
@@ -356,7 +356,7 @@ class OpenIDConnect {
           ->get('connect_existing_users');
         if ($connect_existing_users) {
           // Connect existing user account with this sub.
-          $this->externalAuth->linkExistingAccount($context['sub'], $client->getPluginId(), $account);
+          $this->externalAuth->linkExistingAccount($context['sub'], $client->id(), $account);
         }
         else {
           $this->messenger->addError($this->t('The e-mail address is already taken: @email', [
@@ -386,12 +386,12 @@ class OpenIDConnect {
           case UserInterface::REGISTER_VISITORS:
             // Create a new account if register settings is set to visitors or
             // override is active.
-            $account = $this->createUser($context['sub'], $context['userinfo'], $client->getPluginId());
+            $account = $this->createUser($context['sub'], $context['userinfo'], $client->id());
             break;
 
           case UserInterface::REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL:
             // Create a new account and inform the user of the pending approval.
-            $account = $this->createUser($context['sub'], $context['userinfo'], $client->getPluginId(), 0);
+            $account = $this->createUser($context['sub'], $context['userinfo'], $client->id(), 0);
             $this->messenger->addMessage($this->t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.'));
             break;
         }
@@ -399,7 +399,7 @@ class OpenIDConnect {
 
       // Store the newly created account.
       $this->saveUserinfo($account, $context + ['is_new' => TRUE]);
-      $this->externalAuth->linkExistingAccount($context['sub'], $client->getPluginId(), $account);
+      $this->externalAuth->linkExistingAccount($context['sub'], $client->id(), $account);
     }
 
     // Whether the user should not be logged in due to pending administrator
@@ -439,7 +439,7 @@ class OpenIDConnect {
    *
    * @throws \Exception
    */
-  public function connectCurrentUser(OpenIDConnectClientInterface $client, array $tokens): bool {
+  public function connectCurrentUser(OpenIDConnectClientEntityInterface $client, array $tokens): bool {
     if (!$this->currentUser->isAuthenticated()) {
       throw new \RuntimeException('User not logged in');
     }
@@ -457,7 +457,7 @@ class OpenIDConnect {
 
     if ($account === FALSE) {
       $account = $this->userStorage->load($this->currentUser->id());
-      $this->externalAuth->linkExistingAccount($context['sub'], $client->getPluginId(), $account);
+      $this->externalAuth->linkExistingAccount($context['sub'], $client->id(), $account);
     }
 
     $always_save_userinfo = $this->configFactory->get('openid_connect.settings')->get('always_save_userinfo');
