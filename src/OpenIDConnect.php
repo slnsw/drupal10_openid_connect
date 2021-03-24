@@ -310,15 +310,13 @@ class OpenIDConnect {
    *   The client.
    * @param array $tokens
    *   The tokens as returned by OpenIDConnectClientInterface::retrieveTokens().
-   * @param string|array $destination
-   *   The path to redirect to after authorization.
    *
    * @return bool
    *   TRUE on success, FALSE on failure.
    *
    * @throws \Exception
    */
-  public function completeAuthorization(OpenIDConnectClientEntityInterface $client, array $tokens, &$destination): bool {
+  public function completeAuthorization(OpenIDConnectClientEntityInterface $client, array $tokens): bool {
     if ($this->currentUser->isAuthenticated()) {
       throw new \RuntimeException('User already logged in');
     }
@@ -429,7 +427,7 @@ class OpenIDConnect {
   /**
    * Connect the current user's account to an external provider.
    *
-   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface $client
+   * @param \Drupal\openid_connect\OpenIDConnectClientEntityInterface $client
    *   The client.
    * @param array $tokens
    *   The tokens as returned by OpenIDConnectClientInterface::retrieveTokens().

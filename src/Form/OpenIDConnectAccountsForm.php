@@ -11,9 +11,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountProxy;
 use Drupal\externalauth\AuthmapInterface;
-use Drupal\externalauth\ExternalAuth;
-use Drupal\externalauth\ExternalAuthInterface;
-use Drupal\openid_connect\OpenIDConnectAuthmap;
 use Drupal\openid_connect\OpenIDConnectClaims;
 use Drupal\openid_connect\OpenIDConnectSessionInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -177,7 +174,7 @@ class OpenIDConnectAccountsForm extends FormBase {
     }
 
     list($op, $client_name) = explode('__', $form_state->getTriggeringElement()['#name'], 2);
-    /** @var \Drupal\openid_connect\OpenIDConnectClientEntityInterface $entity */
+    /** @var \Drupal\openid_connect\OpenIDConnectClientEntityInterface $client */
     $client = $this->entityTypeManager->getStorage('openid_connect_client')->loadByProperties(['id' => $client_name])[$client_name];
 
     switch ($op) {

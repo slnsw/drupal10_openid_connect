@@ -13,7 +13,6 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\externalauth\AuthmapInterface;
 use Drupal\externalauth\ExternalAuthInterface;
-use Drupal\openid_connect\OpenIDConnectAuthmap;
 use Drupal\openid_connect\OpenIDConnectClientEntityInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
 use Drupal\Tests\UnitTestCase;
@@ -903,7 +902,7 @@ class OpenIDConnectTest extends UnitTestCase {
       );
 
     $authorization = $oidcMock
-      ->completeAuthorization($clientEntity, $tokens, $destination);
+      ->completeAuthorization($clientEntity, $tokens);
 
     if (empty($userData) && empty($userInfo)) {
       $this->assertEquals(FALSE, $authorization);

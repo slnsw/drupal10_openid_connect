@@ -16,7 +16,7 @@ use Drupal\Core\Url;
 /**
  * Implements hook_help().
  */
-function openid_connect_help($route_name, RouteMatchInterface $route_match) {
+function openid_connect_help($route_name, RouteMatchInterface $route_match) : string {
   $output = '';
   switch ($route_name) {
     // Main module help for the keycloak module.
@@ -47,7 +47,6 @@ function openid_connect_help($route_name, RouteMatchInterface $route_match) {
 function openid_connect_entity_property_info_alter(&$info) {
   $properties = &$info['user']['properties'];
   if (!isset($properties['timezone'])) {
-
     // Adds the missing timezone property.
     $properties['timezone'] = [
       'label' => t('Time zone'),
@@ -57,7 +56,6 @@ function openid_connect_entity_property_info_alter(&$info) {
       'setter callback' => 'entity_property_verbatim_set',
       'schema field' => 'timezone',
     ];
-
   }
 }
 
@@ -65,6 +63,7 @@ function openid_connect_entity_property_info_alter(&$info) {
  * Implements hook_user_insert().
  */
 function openid_connect_user_insert(EntityInterface $entity) {
+  /** @var \Drupal\user\UserInterface $entity */
   if (isset($entity->openid_connect_client) && isset($entity->openid_connect_sub)) {
     $authmap = \Drupal::service('externalauth.authmap');
     $authmap->linkExistingAccount($entity->openid_connect_sub, $entity->openid_connect_client, $entity);
@@ -75,6 +74,7 @@ function openid_connect_user_insert(EntityInterface $entity) {
  * Implements hook_user_cancel().
  */
 function openid_connect_user_cancel($edit, $account, $method) {
+  /** @var \Drupal\externalauth\AuthmapInterface $authmap */
   $authmap = \Drupal::service('externalauth.authmap');
   $authmap->delete($account->id());
 }

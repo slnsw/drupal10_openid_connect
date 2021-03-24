@@ -184,7 +184,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
       $tokens = $plugin->retrieveTokens($request->get('code'));
       if ($tokens) {
         if ($op === 'login') {
-          $success = $this->openIDConnect->completeAuthorization($openid_connect_client, $tokens, $destination);
+          $success = $this->openIDConnect->completeAuthorization($openid_connect_client, $tokens);
 
           if (!$success) {
             // Check Drupal user register settings before saving.
@@ -209,7 +209,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
             }
           }
         }
-        elseif (($op === 'connect') && ($uid === (int) $this->currentUser()->id())) {
+        elseif (($op === 'connect') && ($uid === $this->currentUser()->id())) {
           $success = $this->openIDConnect->connectCurrentUser($openid_connect_client, $tokens);
           if ($success) {
             $this->messenger()->addMessage($this->t('Account successfully connected with @provider.', $provider_param));
