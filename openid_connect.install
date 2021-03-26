@@ -5,6 +5,10 @@
  * Install, update and uninstall functions for the OpenID Connect module.
  */
 
+use Drupal\Core\Config\Entity\ConfigEntityType;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Utility\UpdateException;
+
 /**
  * Add default config for Facebook and LinkedIn provider.
  */
@@ -98,6 +102,54 @@ function openid_connect_update_8106() {
 }
 
 /**
+ * Installs the new config entity type openid_connect_client.
+ */
+function openid_connect_update_8199() {
+  $changeList = \Drupal::entityDefinitionUpdateManager()->getChangeList();
+  if (!array_key_exists('openid_connect_client', $changeList)) {
+    return 'Skipped. The new config entity type openid_connect_client is already installed.';
+  }
+  try {
+    \Drupal::entityDefinitionUpdateManager()->installEntityType(new ConfigEntityType([
+      'id' => 'openid_connect_client',
+      'label' => new TranslatableMarkup('OpenID Connect client'),
+      'admin_permission' => "administer openid connect clients",
+      'handlers' => [
+        'list_builder' => 'Drupal\openid_connect\Controller\OpenIDConnectClientListBuilder',
+        'form' => [
+          'add' => 'Drupal\openid_connect\Form\OpenIDConnectClientAddForm',
+          'edit' => 'Drupal\openid_connect\Form\OpenIDConnectClientEditForm',
+          'delete' => 'Drupal\openid_connect\Form\OpenIDConnectClientDeleteForm',
+        ],
+      ],
+      'config_prefix' => 'client',
+      'entity_keys' => [
+        'id' => 'id',
+        'label' => 'label',
+        'status' => 'status',
+      ],
+      'links' => [
+        "edit-form" => "/admin/config/services/openid-connect/{openid_connect_client}/edit",
+        "delete-form" => "/admin/config/services/openid-connect/{openid_connect_client}/delete",
+        "enable" => "/admin/config/services/openid-connect/{openid_connect_client}/enable",
+        "disable" => "/admin/config/services/openid-connect/{openid_connect_client}/disable",
+        "collection" => "/admin/config/services/openid-connect",
+      ],
+      'config_export' => [
+        'id',
+        'label',
+        'plugin',
+        'settings',
+      ],
+    ]));
+  }
+  catch (\Exception $exception) {
+    throw new UpdateException($exception->getMessage());
+  }
+  return 'Installed the new config entity type openid_connect_client.';
+}
+
+/**
  * Convert client configuration objects to configuration entities.
  */
 function openid_connect_update_8200() {
@@ -183,4 +235,11 @@ function openid_connect_update_8204() {
  */
 function openid_connect_update_8205() {
   \Drupal::database()->schema()->dropTable('openid_connect_authmap');
+}
+
+/**
+ * Installs the new config entity type openid_connect_client.
+ */
+function openid_connect_update_8206() {
+  return openid_connect_update_8199();
 }
