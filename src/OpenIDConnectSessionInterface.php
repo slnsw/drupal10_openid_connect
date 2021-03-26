@@ -14,10 +14,13 @@ interface OpenIDConnectSessionInterface extends ContainerInjectionInterface {
   /**
    * Get the destination redirect path from the session.
    *
+   * @param bool $clear
+   *   The value is cleared from the session, unless this is set to FALSE.
+   *
    * @return string|null
    *   The destination path.
    */
-  public function retrieveDestination(): ?string;
+  public function retrieveDestination(bool $clear = TRUE): ?string;
 
   /**
    * Save the current path in the session, for redirecting after authorization.
@@ -29,10 +32,13 @@ interface OpenIDConnectSessionInterface extends ContainerInjectionInterface {
   /**
    * Get the operation details from the session.
    *
+   * @param bool $clear
+   *   The value is cleared from the session, unless this is set to FALSE.
+   *
    * @return array
    *   The operation details.
    */
-  public function retrieveOp(): array;
+  public function retrieveOp(bool $clear = TRUE): array;
 
   /**
    * Save the operation details in the session.
@@ -47,10 +53,13 @@ interface OpenIDConnectSessionInterface extends ContainerInjectionInterface {
   /**
    * Get the state token from the session.
    *
+   * @param bool $clear
+   *   The value is cleared from the session, unless this is set to FALSE.
+   *
    * @return string|null
    *   The state token.
    */
-  public function retrieveStateToken(): ?string;
+  public function retrieveStateToken(bool $clear = TRUE): ?string;
 
   /**
    * Save the state token in the session.

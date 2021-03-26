@@ -63,9 +63,11 @@ class OpenIDConnectSession implements OpenIDConnectSessionInterface {
   /**
    * {@inheritdoc}
    */
-  public function retrieveDestination() : ?string {
+  public function retrieveDestination(bool $clear = TRUE) : ?string {
     $ret = $this->session->get('openid_connect_destination');
-    $this->session->remove('openid_connect_destination');
+    if ($clear) {
+      $this->session->remove('openid_connect_destination');
+    }
     return $ret;
   }
 
@@ -90,13 +92,15 @@ class OpenIDConnectSession implements OpenIDConnectSessionInterface {
   /**
    * {@inheritdoc}
    */
-  public function retrieveOp(): array {
+  public function retrieveOp(bool $clear = TRUE): array {
     $ret = [
       'op' => $this->session->get('openid_connect_op'),
       'uid' => $this->session->get('openid_connect_uid'),
     ];
-    $this->session->remove('openid_connect_op');
-    $this->session->remove('openid_connect_uid');
+    if ($clear) {
+      $this->session->remove('openid_connect_op');
+      $this->session->remove('openid_connect_uid');
+    }
 
     return $ret;
   }
@@ -114,9 +118,11 @@ class OpenIDConnectSession implements OpenIDConnectSessionInterface {
   /**
    * {@inheritdoc}
    */
-  public function retrieveStateToken() : ?string {
+  public function retrieveStateToken(bool $clear = TRUE) : ?string {
     $ret = $this->session->get('openid_connect_state');
-    $this->session->remove('openid_connect_state');
+    if ($clear) {
+      $this->session->remove('openid_connect_state');
+    }
     return $ret;
   }
 

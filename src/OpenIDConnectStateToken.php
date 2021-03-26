@@ -52,7 +52,7 @@ class OpenIDConnectStateToken implements OpenIDConnectStateTokenInterface, Conta
    * {@inheritdoc}
    */
   public function confirm(string $state_token): bool {
-    $state = $this->session->retrieveStateToken();
+    $state = $this->session->retrieveStateToken(FALSE);
     return !empty($state) && ($state_token == $state);
   }
 

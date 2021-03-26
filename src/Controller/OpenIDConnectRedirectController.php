@@ -140,6 +140,9 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   public function authenticate(OpenIDConnectClientEntityInterface $openid_connect_client): RedirectResponse {
     $request = $this->requestStack->getCurrentRequest();
 
+    // Delete the state token, since it's already been confirmed.
+    $this->session->retrieveStateToken();
+
     // Get parameters from the session, and then clean up.
     $params = $this->session->retrieveOp();
     $op = $params['op'] ?? 'login';
