@@ -172,7 +172,7 @@ function openid_connect_update_8204() {
       ->fields(['uid', 'provider', 'authname'])
       ->values([
         'uid' => $authmap_record->uid,
-        'provider' => $authmap_record->client_name,
+        'provider' => 'openid_connect.' . $authmap_record->client_name,
         'authname' => $authmap_record->sub,
       ])->execute();
   }

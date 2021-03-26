@@ -136,14 +136,14 @@ class OpenIDConnectAccountsForm extends FormBase {
         '#title' => $this->t('Provider: @title', ['@title' => $label]),
       ];
       $fieldset = &$form[$id];
-      $connected = isset($connected_accounts[$id]);
+      $connected = isset($connected_accounts['openid_connect.' . $id]);
       $fieldset['status'] = [
         '#type' => 'item',
         '#title' => $this->t('Status'),
       ];
       if ($connected) {
         $fieldset['status']['#markup'] = $this->t('Connected as %sub', [
-          '%sub' => $connected_accounts[$id],
+          '%sub' => $connected_accounts['openid_connect.' . $id],
         ]);
         $fieldset['openid_connect_client_' . $id . '_disconnect'] = [
           '#type' => 'submit',
@@ -179,7 +179,7 @@ class OpenIDConnectAccountsForm extends FormBase {
 
     switch ($op) {
       case 'disconnect':
-        $this->authmap->delete($form_state->get('account')->id(), $client_name);
+        $this->authmap->delete($form_state->get('account')->id(), 'openid_connect.' . $client_name);
         $this->messenger()->addMessage($this->t('Account successfully disconnected from @client.', ['@client' => $client->label()]));
         break;
 

@@ -212,7 +212,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
             }
           }
         }
-        elseif (($op === 'connect') && ($uid === $this->currentUser()->id())) {
+        elseif (($op === 'connect') && ($uid === (int) $this->currentUser()->id())) {
           $success = $this->openIDConnect->connectCurrentUser($openid_connect_client, $tokens);
           if ($success) {
             $this->messenger()->addMessage($this->t('Account successfully connected with @provider.', $provider_param));

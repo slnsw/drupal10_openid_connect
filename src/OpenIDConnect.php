@@ -272,7 +272,7 @@ class OpenIDConnect {
     }
 
     /** @var \Drupal\user\UserInterface|bool $account */
-    $account = $this->externalAuth->load($sub, $provider);
+    $account = $this->externalAuth->load($sub, 'openid_connect.' . $provider);
     $context = [
       'tokens' => $tokens,
       'plugin_id' => $provider,
@@ -354,7 +354,7 @@ class OpenIDConnect {
           ->get('connect_existing_users');
         if ($connect_existing_users) {
           // Connect existing user account with this sub.
-          $this->externalAuth->linkExistingAccount($context['sub'], $client->id(), $account);
+          $this->externalAuth->linkExistingAccount($context['sub'], 'openid_connect.' . $client->id(), $account);
         }
         else {
           $this->messenger->addError($this->t('The e-mail address is already taken: @email', [
@@ -397,7 +397,6 @@ class OpenIDConnect {
 
       // Store the newly created account.
       $this->saveUserinfo($account, $context + ['is_new' => TRUE]);
-      $this->externalAuth->linkExistingAccount($context['sub'], $client->id(), $account);
     }
 
     // Whether the user should not be logged in due to pending administrator
@@ -411,7 +410,7 @@ class OpenIDConnect {
       return FALSE;
     }
 
-    $this->loginUser($account);
+    $this->externalAuth->userLoginFinalize($account, $context['sub'], 'openid_connect.' . $client->id());
 
     $this->moduleHandler->invokeAll(
       'openid_connect_post_authorize',
@@ -455,7 +454,7 @@ class OpenIDConnect {
 
     if ($account === FALSE) {
       $account = $this->userStorage->load($this->currentUser->id());
-      $this->externalAuth->linkExistingAccount($context['sub'], $client->id(), $account);
+      $this->externalAuth->linkExistingAccount($context['sub'], 'openid_connect.' . $client->id(), $account);
     }
 
     $always_save_userinfo = $this->configFactory->get('openid_connect.settings')->get('always_save_userinfo');
@@ -514,33 +513,15 @@ class OpenIDConnect {
    *   The user object or null on failure.
    */
   public function createUser(string $sub, array $userinfo, string $client_name, int $status = 1): ?UserInterface {
-    /** @var \Drupal\user\UserInterface $account */
-    $account = $this->userStorage->create([
+    $account_data = [
       'name' => $this->generateUsername($sub, $userinfo, $client_name),
       'pass' => user_password(),
       'mail' => $userinfo['email'],
       'init' => $userinfo['email'],
       'status' => $status,
-      'openid_connect_client' => $client_name,
-      'openid_connect_sub' => $sub,
-    ]);
-    try {
-      $account->save();
-      return $account;
-    }
-    catch (EntityStorageException $e) {
-      return NULL;
-    }
-  }
+    ];
 
-  /**
-   * Log in a user.
-   *
-   * @param \Drupal\user\UserInterface $account
-   *   The user account to login.
-   */
-  protected function loginUser(UserInterface $account) {
-    user_login_finalize($account);
+    return $this->externalAuth->register($sub, 'openid_connect.' . $client_name, $account_data);
   }
 
   /**

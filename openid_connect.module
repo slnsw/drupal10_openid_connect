@@ -8,7 +8,6 @@
 /* @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
 /* @noinspection PhpUnused */
 
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
@@ -56,18 +55,6 @@ function openid_connect_entity_property_info_alter(&$info) {
       'setter callback' => 'entity_property_verbatim_set',
       'schema field' => 'timezone',
     ];
-  }
-}
-
-/**
- * Implements hook_user_insert().
- */
-function openid_connect_user_insert(EntityInterface $entity) {
-  /** @var \Drupal\user\UserInterface $entity */
-  if (isset($entity->openid_connect_client) && isset($entity->openid_connect_sub)) {
-    /** @var \Drupal\externalauth\ExternalAuthInterface $externalauth */
-    $externalauth = \Drupal::service('externalauth.externalauth');
-    $externalauth->linkExistingAccount($entity->openid_connect_sub, $entity->openid_connect_client, $entity);
   }
 }
 
