@@ -40,9 +40,7 @@ function openid_connect_update_8101() {
  * Add default config for GitHub provider.
  */
 function openid_connect_update_8102() {
-  $config_factory = \Drupal::configFactory();
-
-  $config = $config_factory->getEditable('openid_connect.settings.github');
+  $config = \Drupal::configFactory()->getEditable('openid_connect.settings.github');
   $config->set('enabled', FALSE);
   $config->set('settings', [
     'client_id' => '',
@@ -55,8 +53,7 @@ function openid_connect_update_8102() {
  * Update the active config with the registration override value.
  */
 function openid_connect_update_8103() {
-  $config_factory = \Drupal::configFactory();
-  $config = $config_factory->getEditable('openid_connect.settings');
+  $config = \Drupal::configFactory()->getEditable('openid_connect.settings');
   $config->set('override_registration_settings', FALSE);
   $config->save(TRUE);
 }
@@ -65,8 +62,7 @@ function openid_connect_update_8103() {
  * Update the active config with the connect existing users value.
  */
 function openid_connect_update_8104() {
-  $config_factory = \Drupal::configFactory();
-  $config = $config_factory->getEditable('openid_connect.settings');
+  $config = \Drupal::configFactory()->getEditable('openid_connect.settings');
   $config->set('connect_existing_users', FALSE);
   $config->save(TRUE);
 }
@@ -92,9 +88,7 @@ function openid_connect_update_8105() {
  * Add default config for Okta provider.
  */
 function openid_connect_update_8106() {
-  $config_factory = \Drupal::configFactory();
-
-  $config = $config_factory->getEditable('openid_connect.settings.okta');
+  $config = \Drupal::configFactory()->getEditable('openid_connect.settings.okta');
   $config->set('enabled', FALSE);
   $config->set('settings', [
     'client_id' => '',
@@ -198,9 +192,7 @@ function openid_connect_update_8201() {
  * Add redirect_login to module settings.
  */
 function openid_connect_update_8202() {
-  $config_factory = \Drupal::configFactory();
-
-  $config = $config_factory->getEditable('openid_connect.settings');
+  $config = \Drupal::configFactory()->getEditable('openid_connect.settings');
   $config->set('redirect_login', 'user');
   $config->save(TRUE);
 }

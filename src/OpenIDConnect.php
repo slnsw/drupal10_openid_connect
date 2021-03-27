@@ -412,13 +412,8 @@ class OpenIDConnect {
 
     $this->externalAuth->userLoginFinalize($account, $context['sub'], 'openid_connect.' . $client->id());
 
-    $this->moduleHandler->invokeAll(
-      'openid_connect_post_authorize',
-      [
-        $account,
-        $context,
-      ]
-    );
+    $this->moduleHandler
+      ->invokeAll('openid_connect_post_authorize', [$account, $context]);
 
     return TRUE;
   }

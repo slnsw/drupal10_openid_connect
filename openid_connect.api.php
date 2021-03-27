@@ -5,6 +5,7 @@
  * Documentation for OpenID Connect module APIs.
  */
 
+/* @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
 /* @noinspection PhpUnused */
 
 use Drupal\user\UserInterface;
