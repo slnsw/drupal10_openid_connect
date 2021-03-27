@@ -17,6 +17,9 @@ openid_connect.settings:
     redirect_login:
       type: string
       label: 'Redirect on login'
+    redirect_logout:
+      type: string
+      label: 'Redirect on logout'
     userinfo_mappings:
       type: sequence
       label: 'User claims mapping'
@@ -76,6 +79,9 @@ openid_connect.client.plugin.generic:
     userinfo_endpoint:
       type: string
       label: 'Userinfo endpoint'
+    end_session_endpoint:
+      type: string
+      label: 'End Session endpoint'
 
 openid_connect.client.plugin.okta:
   type: mapping

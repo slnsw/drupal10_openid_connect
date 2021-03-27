@@ -8,7 +8,9 @@
 /* @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
 /* @noinspection PhpUnused */
 
+use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\user\UserInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Modify the list of claims.
@@ -260,5 +262,19 @@ function hook_openid_connect_userinfo_save(UserInterface $account, array $contex
   $my_info = $context['userinfo']['my_info'];
   foreach ($my_info as $key => $value) {
     $account->set('field_' . $key, $value);
+  }
+}
+
+/**
+ * Alter the redirect response on logout.
+ *
+ * @param \Symfony\Component\HttpFoundation\RedirectResponse $response
+ *   The response object to alter.
+ * @param string $client
+ *   The client ID.
+ */
+function hook_openid_connect_redirect_logout(RedirectResponse $response, string $client) {
+  if ($response instanceof TrustedRedirectResponse) {
+    $response->setTrustedTargetUrl($response->getTargetUrl() . '&client=' . $client);
   }
 }

@@ -51,6 +51,7 @@ class OpenIDConnectOktaClient extends OpenIDConnectClientBase {
       'authorization' => 'https://' . $this->configuration['okta_domain'] . '/oauth2/v1/authorize',
       'token' => 'https://' . $this->configuration['okta_domain'] . '/oauth2/v1/token',
       'userinfo' => 'https://' . $this->configuration['okta_domain'] . '/oauth2/v1/userinfo',
+      'end_session' => 'https://' . $this->configuration['okta_domain'] . '/oauth2/v1/logout',
     ];
   }
 

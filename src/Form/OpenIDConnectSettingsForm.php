@@ -143,6 +143,13 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
       '#default_value' => $settings->get('redirect_login'),
     ];
 
+    $form['redirects']['redirect_logout'] = [
+      '#title' => $this->t('Logout'),
+      '#type' => 'textfield',
+      '#description' => $this->t('Path to redirect to on client logout'),
+      '#default_value' => $settings->get('redirect_logout'),
+    ];
+
     $form['userinfo_mappings'] = [
       '#title' => $this->t('User claims mapping'),
       '#type' => 'fieldset',
@@ -189,6 +196,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
       ->set('override_registration_settings', $form_state->getValue('override_registration_settings'))
       ->set('user_login_display', $form_state->getValue('user_login_display'))
       ->set('redirect_login', $form_state->getValue('redirect_login'))
+      ->set('redirect_logout', $form_state->getValue('redirect_logout'))
       ->set('userinfo_mappings', array_filter($form_state->getValue('userinfo_mappings')))
       ->save();
   }

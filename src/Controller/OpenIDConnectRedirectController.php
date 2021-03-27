@@ -6,6 +6,10 @@ use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\externalauth\AuthmapInterface;
+use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Url;
@@ -70,6 +74,27 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   protected $configFactory;
 
   /**
+   * The external authmap service.
+   *
+   * @var \Drupal\externalauth\AuthmapInterface
+   */
+  protected $authmap;
+
+  /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected $currentUser;
+
+  /**
+   * The module handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
    * The constructor.
    *
    * @param \Drupal\openid_connect\OpenIDConnect $openid_connect
@@ -84,14 +109,23 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    *   The OpenID Connect session service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
+   * @param \Drupal\externalauth\AuthmapInterface $authmap
+   *   The external authmap service.
+   * @param \Drupal\Core\Session\AccountProxyInterface $current_user
+   *   Account proxy for the currently logged-in user.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler.
    */
-  public function __construct(OpenIDConnect $openid_connect, OpenIDConnectStateTokenInterface $state_token, RequestStack $request_stack, LoggerChannelFactoryInterface $logger_factory, OpenIDConnectSessionInterface $session, ConfigFactoryInterface $config_factory) {
+  public function __construct(OpenIDConnect $openid_connect, OpenIDConnectStateTokenInterface $state_token, RequestStack $request_stack, LoggerChannelFactoryInterface $logger_factory, OpenIDConnectSessionInterface $session, ConfigFactoryInterface $config_factory, AuthmapInterface $authmap, AccountProxyInterface $current_user, ModuleHandlerInterface $module_handler) {
     $this->openIDConnect = $openid_connect;
     $this->stateToken = $state_token;
     $this->requestStack = $request_stack;
     $this->loggerFactory = $logger_factory;
     $this->session = $session;
     $this->configFactory = $config_factory;
+    $this->authmap = $authmap;
+    $this->currentUser = $current_user;
+    $this->moduleHandler = $module_handler;
   }
 
   /**
@@ -104,7 +138,10 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
       $container->get('request_stack'),
       $container->get('logger.factory'),
       $container->get('openid_connect.session'),
-      $container->get('config.factory')
+      $container->get('config.factory'),
+      $container->get('externalauth.authmap'),
+      $container->get('current_user'),
+      $container->get('module_handler')
     );
   }
 
@@ -233,6 +270,57 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
     // @see \Drupal\openid_connect\OpenIDConnectSession::saveDestination()
     $redirect = Url::fromUri('internal:/' . ltrim($destination, '/'))->toString();
     return new RedirectResponse($redirect);
+  }
+
+  /**
+   * Redirect after logout.
+   */
+  public function redirectLogout() {
+    // Set default URL.
+    $default_url = Url::fromRoute('<front>')->toString(TRUE);
+    $response = new RedirectResponse($default_url->getGeneratedUrl());
+
+    // @todo The fact that the user has a connected account doesn't necessarily
+    //   mean that it was used for the login. This info should probably be kept
+    //   in the session.
+    // Get client names for this user based on its username.
+    $mapped_users = $this->authmap->getAll($this->currentUser->id());
+    if (is_array($mapped_users) & !empty($mapped_users)) {
+      foreach (array_keys($mapped_users) as $key) {
+        // strlen('openid_connect.') = 15.
+        $client_name = substr($key, 15);
+
+        // Perform log out.
+        if (!empty($client_name)) {
+          /** @var \Drupal\openid_connect\Entity\OpenIDConnectClientEntity $entity */
+          $entity = $this->entityTypeManager()->getStorage('openid_connect_client')->loadByProperties(['id' => $client_name])[$client_name];
+          $endpoints = $entity->getPlugin()->getEndpoints();
+
+          $redirect_logout = $this->configFactory->get('openid_connect.settings')->get('redirect_logout');
+          $redirect_logout_url = $redirect_logout ? Url::fromUri('internal:/' . ltrim($redirect_logout, '/'))->toString(TRUE)->getGeneratedUrl() : '';
+
+          // Destroy session if provider supports it.
+          if (!empty($endpoints['end_session'])) {
+            $url_options = [];
+            if ($redirect_logout_url) {
+              $url_options['query']['redirect_logout'] = $redirect_logout_url;
+            }
+            $redirect = Url::fromUri($endpoints['end_session'], $url_options)->toString(TRUE);
+            $response = new TrustedRedirectResponse($redirect->getGeneratedUrl());
+            $response->addCacheableDependency($redirect);
+          }
+          else {
+            $this->messenger()->addWarning('@provider does not support log out. You are logged out of this site but not out of the OpenID Connect provider.', ['@provider' => $client_name]);
+            $response = new TrustedRedirectResponse($redirect_logout_url);
+            $response->addCacheableDependency($redirect_logout_url);
+          }
+          $this->moduleHandler->alter('openid_connect_redirect_logout', $response, $client_name);
+        }
+      }
+    }
+    // Logout from Drupal.
+    user_logout();
+    return $response;
   }
 
 }

@@ -369,7 +369,7 @@ class OpenIDConnectTest extends UnitTestCase {
 
       if (!$hasPermission) {
         $this->authmap->expects($this->once())
-          ->method('getConnectedAccounts')
+          ->method('getAll')
           ->willReturn($connectedAccounts);
       }
     }

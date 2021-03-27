@@ -238,3 +238,22 @@ function openid_connect_update_8205() {
 function openid_connect_update_8206() {
   return openid_connect_update_8199();
 }
+
+/**
+ * Update generic plugins with End Session endpoint and logout redirect URL.
+ */
+function openid_connect_update_8207() {
+  $clients = \Drupal::entityTypeManager()->getStorage('openid_connect_client')->loadByProperties(['plugin' => 'generic']);
+
+  foreach ($clients as $client) {
+    $config = $client->getPlugin()->getConfiguration();
+    if (empty($config['end_session_endpoint'])) {
+      $client->getPlugin()->setConfiguration(['end_session_endpoint' => '']);
+      $client->save();
+    }
+  }
+
+  $config = \Drupal::configFactory()->getEditable('openid_connect.settings');
+  $config->set('redirect_logout', '');
+  $config->save(TRUE);
+}

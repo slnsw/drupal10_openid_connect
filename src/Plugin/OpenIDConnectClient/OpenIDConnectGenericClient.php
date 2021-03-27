@@ -27,6 +27,7 @@ class OpenIDConnectGenericClient extends OpenIDConnectClientBase {
       'authorization_endpoint' => 'https://example.com/oauth2/authorize',
       'token_endpoint' => 'https://example.com/oauth2/token',
       'userinfo_endpoint' => 'https://example.com/oauth2/UserInfo',
+      'end_session_endpoint' => '',
     ] + parent::defaultConfiguration();
   }
 
@@ -76,6 +77,14 @@ class OpenIDConnectGenericClient extends OpenIDConnectClientBase {
       '#title' => $this->t('UserInfo endpoint'),
       '#type' => 'url',
       '#default_value' => $this->configuration['userinfo_endpoint'],
+      '#states' => [
+        'visible' => [':input[name="settings[use_well_known]"]' => ['checked' => FALSE]],
+      ],
+    ];
+    $form['end_session_endpoint'] = [
+      '#title' => $this->t('End Session endpoint'),
+      '#type' => 'url',
+      '#default_value' => $this->configuration['end_session_endpoint'],
       '#states' => [
         'visible' => [':input[name="settings[use_well_known]"]' => ['checked' => FALSE]],
       ],
@@ -156,6 +165,7 @@ class OpenIDConnectGenericClient extends OpenIDConnectClientBase {
       'authorization' => $this->configuration['authorization_endpoint'],
       'token' => $this->configuration['token_endpoint'],
       'userinfo' => $this->configuration['userinfo_endpoint'],
+      'end_session' => $this->configuration['end_session_endpoint'],
     ];
   }
 

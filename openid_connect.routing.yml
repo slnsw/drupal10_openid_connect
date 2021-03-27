@@ -71,3 +71,13 @@ openid_connect.accounts_controller_index:
     _title: 'Connected Accounts'
   requirements:
     _custom_access: '\Drupal\openid_connect\Form\OpenIDConnectAccountsForm::access'
+
+openid_connect.logout:
+  path: 'user/logout'
+  defaults:
+    _controller: '\Drupal\openid_connect\Controller\OpenIDConnectRedirectController::redirectLogout'
+    _title: 'End session'
+  requirements:
+    _user_is_logged_in: 'TRUE'
+  options:
+    no_cache: TRUE
