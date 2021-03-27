@@ -460,20 +460,15 @@ class OpenIDConnectTest extends UnitTestCase {
       'mail' => $userinfo['email'],
       'init' => $userinfo['email'],
       'status' => $status,
-      'openid_connect_client' => $client_name,
-      'openid_connect_sub' => $sub,
     ];
 
     // Mock the user account to be created.
     $account = $this
       ->createMock(UserInterface::class);
-    $account->expects($this->once())
-      ->method('save')
-      ->willReturn(1);
 
-    $this->userStorage->expects($this->once())
-      ->method('create')
-      ->with($expectedAccountArray)
+    $this->externalAuth->expects($this->once())
+      ->method('register')
+      ->with($sub, 'openid_connect.' . $client_name, $expectedAccountArray)
       ->willReturn($account);
 
     if ($duplicate) {
