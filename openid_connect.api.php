@@ -209,7 +209,7 @@ function hook_openid_connect_post_authorize(UserInterface $account, array $conte
  *   - is_new:           Whether the account was created during authorization.
  */
 function hook_openid_connect_userinfo_claim_alter(&$claim_value, array $context) {
-  // Alter only, when the claim comes from the 'generic' identiy provider and
+  // Alter only, when the claim comes from the 'generic' identity provider and
   // the property is 'telephone'.
   if (
     $context['plugin_id'] != 'generic'
@@ -219,7 +219,7 @@ function hook_openid_connect_userinfo_claim_alter(&$claim_value, array $context)
   }
 
   // Replace international number indicator with double zero.
-  str_replace('+', '00', $claim_value);
+  $claim_value = str_replace('+', '00', $claim_value);
 }
 
 /**

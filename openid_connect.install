@@ -5,6 +5,9 @@
  * Install, update and uninstall functions for the OpenID Connect module.
  */
 
+/* @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+/* @noinspection PhpUnused */
+
 use Drupal\Core\Config\Entity\ConfigEntityType;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Utility\UpdateException;
