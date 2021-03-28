@@ -9,7 +9,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Session\AccountProxy;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\externalauth\AuthmapInterface;
 use Drupal\openid_connect\OpenIDConnectClaims;
 use Drupal\openid_connect\OpenIDConnectSessionInterface;
@@ -30,9 +30,9 @@ class OpenIDConnectAccountsForm extends FormBase {
   protected $entityTypeManager;
 
   /**
-   * Drupal\Core\Session\AccountProxy definition.
+   * Drupal\Core\Session\AccountProxyInterface definition.
    *
-   * @var \Drupal\Core\Session\AccountProxy
+   * @var \Drupal\Core\Session\AccountProxyInterface
    */
   protected $currentUser;
 
@@ -64,7 +64,7 @@ class OpenIDConnectAccountsForm extends FormBase {
    *   The config factory.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
-   * @param \Drupal\Core\Session\AccountProxy $current_user
+   * @param \Drupal\Core\Session\AccountProxyInterface $current_user
    *   The current user account.
    * @param \Drupal\externalauth\AuthmapInterface $authmap
    *   The authmap storage.
@@ -73,7 +73,7 @@ class OpenIDConnectAccountsForm extends FormBase {
    * @param \Drupal\openid_connect\OpenIDConnectSessionInterface $session
    *   The OpenID Connect session service.
    */
-  public function __construct(ConfigFactory $config_factory, EntityTypeManagerInterface $entity_type_manager, AccountProxy $current_user, AuthmapInterface $authmap, OpenIDConnectClaims $claims, OpenIDConnectSessionInterface $session) {
+  public function __construct(ConfigFactory $config_factory, EntityTypeManagerInterface $entity_type_manager, AccountProxyInterface $current_user, AuthmapInterface $authmap, OpenIDConnectClaims $claims, OpenIDConnectSessionInterface $session) {
     $this->setConfigFactory($config_factory);
     $this->entityTypeManager = $entity_type_manager;
     $this->currentUser = $current_user;
