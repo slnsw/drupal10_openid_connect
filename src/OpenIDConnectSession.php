@@ -4,6 +4,7 @@ namespace Drupal\openid_connect;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Routing\RedirectDestinationInterface;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
@@ -81,7 +82,7 @@ class OpenIDConnectSession implements OpenIDConnectSessionInterface {
     $destination = ltrim($this->redirectDestination->get(), '/');
 
     // Don't redirect to user/login. In this case redirect to the user profile.
-    if (strpos($destination, 'user/login') === 0) {
+    if (strpos($destination, ltrim(Url::fromRoute('user.login')->toString(), '/')) === 0) {
       $redirect_login = $this->configFactory->get('openid_connect.settings')->get('redirect_login');
       $destination = $redirect_login ?: 'user';
     }
