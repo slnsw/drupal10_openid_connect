@@ -18,7 +18,6 @@ use Drupal\openid_connect\OpenIDConnectSessionInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
 use Drupal\openid_connect\OpenIDConnect;
 use Drupal\openid_connect\OpenIDConnectStateTokenInterface;
-use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -185,8 +184,6 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
     $op = $params['op'] ?? 'login';
     $uid = $params['uid'] ?? NULL;
 
-    $destination = $this->session->retrieveDestination() ?: $this->configFactory->get('openid_connect.settings')->get('redirect_login');
-
     $plugin = $openid_connect_client->getPlugin();
     if (!$request->get('error') && (!($plugin instanceof OpenIDConnectClientInterface) || !$request->get('code'))) {
       // In case we don't have an error, but the client could not be loaded or
@@ -227,26 +224,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
           $success = $this->openIDConnect->completeAuthorization($openid_connect_client, $tokens);
 
           if (!$success) {
-            // Check Drupal user register settings before saving.
-            $register = $this->config('user.settings')->get('register');
-            // Respect possible override from OpenID-Connect settings.
-            $register_override = $this->config('openid_connect.settings')
-              ->get('override_registration_settings');
-            if ($register === UserInterface::REGISTER_ADMINISTRATORS_ONLY && $register_override) {
-              $register = UserInterface::REGISTER_VISITORS;
-            }
-
-            switch ($register) {
-              case UserInterface::REGISTER_ADMINISTRATORS_ONLY:
-              case UserInterface::REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL:
-                // Skip creating an error message, as completeAuthorization
-                // already added according messages.
-                break;
-
-              default:
-                $this->messenger()->addError($this->t('Logging in with @provider could not be completed due to an error.', $provider_param));
-                break;
-            }
+            $this->messenger()->addError($this->t('Logging in with @provider could not be completed due to an error.', $provider_param));
           }
         }
         elseif (($op === 'connect') && ($uid === (int) $this->currentUser()->id())) {
@@ -268,6 +246,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
     // parameters or fragments already.
     //
     // @see \Drupal\openid_connect\OpenIDConnectSession::saveDestination()
+    $destination = $this->session->retrieveDestination() ?: $this->configFactory->get('openid_connect.settings')->get('redirect_login');
     $redirect = Url::fromUri('internal:/' . ltrim($destination, '/'))->toString();
     return new RedirectResponse($redirect);
   }
