@@ -3,6 +3,7 @@
 namespace Drupal\openid_connect;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Routing\RedirectDestinationInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -35,6 +36,13 @@ class OpenIDConnectSession implements OpenIDConnectSessionInterface {
   protected $session;
 
   /**
+   * The language manager.
+   *
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected $languageManager;
+
+  /**
    * Construct an instance of the OpenID Connect session service.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -43,11 +51,14 @@ class OpenIDConnectSession implements OpenIDConnectSessionInterface {
    *   The redirect destination service.
    * @param \Symfony\Component\HttpFoundation\Session\SessionInterface $session
    *   The session object.
+   * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
+   *   The language manager service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, RedirectDestinationInterface $redirect_destination, SessionInterface $session) {
+  public function __construct(ConfigFactoryInterface $config_factory, RedirectDestinationInterface $redirect_destination, SessionInterface $session, LanguageManagerInterface $language_manager) {
     $this->configFactory = $config_factory;
     $this->redirectDestination = $redirect_destination;
     $this->session = $session;
+    $this->languageManager = $language_manager;
   }
 
   /**
@@ -57,17 +68,22 @@ class OpenIDConnectSession implements OpenIDConnectSessionInterface {
     return new static(
       $container->get('config.factory'),
       $container->get('redirect.destination'),
-      $container->get('session')
+      $container->get('session'),
+      $container->get('language_manager')
     );
   }
 
   /**
    * {@inheritdoc}
    */
-  public function retrieveDestination(bool $clear = TRUE) : ?string {
-    $ret = $this->session->get('openid_connect_destination');
+  public function retrieveDestination(bool $clear = TRUE) : array {
+    $ret = [
+      'destination' => $this->session->get('openid_connect_destination'),
+      'langcode' => $this->session->get('openid_connect_langcode'),
+    ];
     if ($clear) {
       $this->session->remove('openid_connect_destination');
+      $this->session->remove('openid_connect_langcode');
     }
     return $ret;
   }
@@ -80,6 +96,7 @@ class OpenIDConnectSession implements OpenIDConnectSessionInterface {
     // that in the redirection. Otherwise use the current request path and
     // query.
     $destination = ltrim($this->redirectDestination->get(), '/');
+    $langcode = $this->languageManager->getCurrentLanguage()->getId();
 
     // Don't redirect to user/login. In this case redirect to the user profile.
     if (strpos($destination, ltrim(Url::fromRoute('user.login')->toString(), '/')) === 0) {
@@ -88,6 +105,7 @@ class OpenIDConnectSession implements OpenIDConnectSessionInterface {
     }
 
     $this->session->set('openid_connect_destination', $destination);
+    $this->session->set('openid_connect_langcode', $langcode);
   }
 
   /**

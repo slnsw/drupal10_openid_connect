@@ -7,6 +7,7 @@ use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\externalauth\AuthmapInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
@@ -94,6 +95,13 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   protected $moduleHandler;
 
   /**
+   * The language manager.
+   *
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected $languageManager;
+
+  /**
    * The constructor.
    *
    * @param \Drupal\openid_connect\OpenIDConnect $openid_connect
@@ -114,8 +122,10 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    *   Account proxy for the currently logged-in user.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler.
+   * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
+   *   The language manager service.
    */
-  public function __construct(OpenIDConnect $openid_connect, OpenIDConnectStateTokenInterface $state_token, RequestStack $request_stack, LoggerChannelFactoryInterface $logger_factory, OpenIDConnectSessionInterface $session, ConfigFactoryInterface $config_factory, AuthmapInterface $authmap, AccountProxyInterface $current_user, ModuleHandlerInterface $module_handler) {
+  public function __construct(OpenIDConnect $openid_connect, OpenIDConnectStateTokenInterface $state_token, RequestStack $request_stack, LoggerChannelFactoryInterface $logger_factory, OpenIDConnectSessionInterface $session, ConfigFactoryInterface $config_factory, AuthmapInterface $authmap, AccountProxyInterface $current_user, ModuleHandlerInterface $module_handler, LanguageManagerInterface $language_manager) {
     $this->openIDConnect = $openid_connect;
     $this->stateToken = $state_token;
     $this->requestStack = $request_stack;
@@ -125,6 +135,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
     $this->authmap = $authmap;
     $this->currentUser = $current_user;
     $this->moduleHandler = $module_handler;
+    $this->languageManager = $language_manager;
   }
 
   /**
@@ -140,7 +151,8 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
       $container->get('config.factory'),
       $container->get('externalauth.authmap'),
       $container->get('current_user'),
-      $container->get('module_handler')
+      $container->get('module_handler'),
+      $container->get('language_manager')
     );
   }
 
@@ -246,8 +258,12 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
     // parameters or fragments already.
     //
     // @see \Drupal\openid_connect\OpenIDConnectSession::saveDestination()
-    $destination = $this->session->retrieveDestination() ?: $this->configFactory->get('openid_connect.settings')->get('redirect_login');
-    $redirect = Url::fromUri('internal:/' . ltrim($destination, '/'))->toString();
+    $session = $this->session->retrieveDestination();
+    $destination = $session['destination'] ?: $this->configFactory->get('openid_connect.settings')->get('redirect_login');
+    $langcode = $session['langcode'] ?: $this->languageManager->getCurrentLanguage()->getId();
+    $language = $this->languageManager()->getLanguage($langcode);
+
+    $redirect = Url::fromUri('internal:/' . ltrim($destination, '/'), ['language' => $language])->toString();
     return new RedirectResponse($redirect);
   }
 
@@ -256,7 +272,8 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    */
   public function redirectLogout() {
     // Set default URL.
-    $default_url = Url::fromRoute('<front>')->toString(TRUE);
+    $language = $this->languageManager->getCurrentLanguage();
+    $default_url = Url::fromRoute('<front>', [], ['language' => $language])->toString(TRUE);
     $response = new RedirectResponse($default_url->getGeneratedUrl());
 
     // @todo The fact that the user has a connected account doesn't necessarily
@@ -276,11 +293,11 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
           $endpoints = $entity->getPlugin()->getEndpoints();
 
           $redirect_logout = $this->configFactory->get('openid_connect.settings')->get('redirect_logout');
-          $redirect_logout_url = $redirect_logout ? Url::fromUri('internal:/' . ltrim($redirect_logout, '/'))->toString(TRUE)->getGeneratedUrl() : '';
+          $redirect_logout_url = $redirect_logout ? Url::fromUri('internal:/' . ltrim($redirect_logout, '/'), ['language' => $language])->toString(TRUE)->getGeneratedUrl() : '';
 
           // Destroy session if provider supports it.
           if (!empty($endpoints['end_session'])) {
-            $url_options = [];
+            $url_options = ['language' => $language];
             if ($redirect_logout_url) {
               $url_options['query']['redirect_logout'] = $redirect_logout_url;
             }

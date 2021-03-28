@@ -7,6 +7,8 @@ namespace Drupal\Tests\openid_connect\Unit;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Routing\RedirectDestinationInterface;
 use Drupal\Core\Routing\UrlGeneratorInterface;
 use Drupal\openid_connect\OpenIDConnectSession;
@@ -56,6 +58,13 @@ class OpenIdConnectSessionTest extends UnitTestCase {
   protected $session;
 
   /**
+   * A mock of the language manager service.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
+  protected $languageManager;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
@@ -67,6 +76,8 @@ class OpenIdConnectSessionTest extends UnitTestCase {
     $this->redirectDestination = $this->createMock(RedirectDestinationInterface::class);
     // Mock the 'session' service.
     $this->session = $this->createMock(SessionInterface::class);
+    // Mock the 'language_manager' service.
+    $this->languageManager = $this->createMock(LanguageManagerInterface::class);
 
     // Mock the url generator service.
     $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
@@ -92,12 +103,21 @@ class OpenIdConnectSessionTest extends UnitTestCase {
       ->willReturn($expectedDestination);
 
     // Mock the get method for the 'session' service.
-    $this->session->expects($this->once())
+    $this->session->expects($this->exactly(2))
       ->method('get')
-      ->willReturn($expectedDestination);
+      ->willReturnOnConsecutiveCalls($expectedDestination, 'und');
+
+    $language = $this->createMock(LanguageInterface::class);
+    $language->expects($this->once())
+      ->method('getId')
+      ->willReturn('und');
+
+    $this->languageManager->expects($this->once())
+      ->method('getCurrentLanguage')
+      ->willReturn($language);
 
     // Create a new OpenIDConnectSession class.
-    $session = new OpenIDConnectSession($this->configFactory, $this->redirectDestination, $this->session);
+    $session = new OpenIDConnectSession($this->configFactory, $this->redirectDestination, $this->session, $this->languageManager);
 
     // Call the saveDestination() method.
     $session->saveDestination();
@@ -106,7 +126,9 @@ class OpenIdConnectSessionTest extends UnitTestCase {
     $destination = $session->retrieveDestination();
 
     // Assert the destination matches our expectation.
-    $this->assertEquals($expectedDestination, $destination);
+    $this->assertEquals($destination,
+      ['destination' => $expectedDestination, 'langcode' => 'und']
+    );
   }
 
   /**
@@ -130,12 +152,21 @@ class OpenIdConnectSessionTest extends UnitTestCase {
       ->willReturn(self::TEST_USER_PATH);
 
     // Mock the get method for the 'session' service.
-    $this->session->expects($this->once())
+    $this->session->expects($this->exactly(2))
       ->method('get')
-      ->willReturn($expectedDestination);
+      ->willReturnOnConsecutiveCalls($expectedDestination, 'und');
+
+    $language = $this->createMock(LanguageInterface::class);
+    $language->expects($this->once())
+      ->method('getId')
+      ->willReturn('und');
+
+    $this->languageManager->expects($this->once())
+      ->method('getCurrentLanguage')
+      ->willReturn($language);
 
     // Create a class to test with.
-    $session = new OpenIDConnectSession($this->configFactory, $this->redirectDestination, $this->session);
+    $session = new OpenIDConnectSession($this->configFactory, $this->redirectDestination, $this->session, $this->languageManager);
 
     // Call the saveDestination method.
     $session->saveDestination();
@@ -144,7 +175,9 @@ class OpenIdConnectSessionTest extends UnitTestCase {
     $destination = $session->retrieveDestination();
 
     // Assert the destination matches our expectations.
-    $this->assertEquals($expectedDestination, $destination);
+    $this->assertEquals($destination,
+      ['destination' => $expectedDestination, 'langcode' => 'und']
+    );
   }
 
 }

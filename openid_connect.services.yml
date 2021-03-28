@@ -17,7 +17,7 @@ services:
 
   openid_connect.session:
     class: Drupal\openid_connect\OpenIDConnectSession
-    arguments: ['@config.factory', '@redirect.destination', '@session']
+    arguments: ['@config.factory', '@redirect.destination', '@session', '@language_manager']
 
   openid_connect.autodiscover:
     class: Drupal\openid_connect\OpenIDConnectAutoDiscover

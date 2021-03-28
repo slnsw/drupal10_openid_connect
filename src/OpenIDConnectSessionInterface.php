@@ -12,18 +12,18 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 interface OpenIDConnectSessionInterface extends ContainerInjectionInterface {
 
   /**
-   * Get the destination redirect path from the session.
+   * Get the destination redirect path and langcode from the session.
    *
    * @param bool $clear
    *   The value is cleared from the session, unless this is set to FALSE.
    *
-   * @return string|null
-   *   The destination path.
+   * @return array
+   *   The destination path and langcode.
    */
-  public function retrieveDestination(bool $clear = TRUE): ?string;
+  public function retrieveDestination(bool $clear = TRUE): array;
 
   /**
-   * Save the current path in the session, for redirecting after authorization.
+   * Save the current path and langcode, for redirecting after authorization.
    *
    * @see \Drupal\openid_connect\Controller\OpenIDConnectRedirectController::authenticate()
    */
