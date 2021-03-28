@@ -6,7 +6,9 @@ namespace Drupal\Tests\openid_connect\Unit;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Routing\RedirectDestinationInterface;
+use Drupal\Core\Routing\UrlGeneratorInterface;
 use Drupal\openid_connect\OpenIDConnectSession;
 use Drupal\Tests\UnitTestCase;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -65,6 +67,16 @@ class OpenIdConnectSessionTest extends UnitTestCase {
     $this->redirectDestination = $this->createMock(RedirectDestinationInterface::class);
     // Mock the 'session' service.
     $this->session = $this->createMock(SessionInterface::class);
+
+    // Mock the url generator service.
+    $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
+    $urlGenerator->expects($this->once())
+      ->method('generateFromRoute')
+      ->with('user.login', [], [], FALSE)
+      ->willReturn('/user/login');
+    $container = new ContainerBuilder();
+    $container->set('url_generator', $urlGenerator);
+    \Drupal::setContainer($container);
   }
 
   /**
