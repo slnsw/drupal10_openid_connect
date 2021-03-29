@@ -215,13 +215,16 @@ function openid_connect_update_8204() {
   $authmap_records = $query->execute()->fetchAllAssoc('aid');
 
   foreach ($authmap_records as $authmap_record) {
-    $database->insert('authmap')
-      ->fields(['uid', 'provider', 'authname'])
-      ->values([
+    $database->merge('authmap')
+      ->keys([
         'uid' => $authmap_record->uid,
         'provider' => 'openid_connect.' . $authmap_record->client_name,
+      ])
+      ->fields([
         'authname' => $authmap_record->sub,
-      ])->execute();
+        'data' => 'N;',
+      ])
+      ->execute();
   }
 }
 
