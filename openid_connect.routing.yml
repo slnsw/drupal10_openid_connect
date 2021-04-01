@@ -81,3 +81,13 @@ openid_connect.logout:
     _user_is_logged_in: 'TRUE'
   options:
     no_cache: TRUE
+
+openid_connect.login:
+  path: '/user/login/openid_connect'
+  defaults:
+    _controller: '\Drupal\openid_connect\Controller\OpenIDConnectLoginController::loginForm'
+    _title: 'Log in via OpenID Connect'
+  requirements:
+    _user_is_logged_in: 'FALSE'
+  options:
+    _maintenance_access: TRUE
