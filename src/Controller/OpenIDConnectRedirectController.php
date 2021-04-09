@@ -306,9 +306,11 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
             $response->addCacheableDependency($redirect);
           }
           else {
-            $this->messenger()->addWarning('@provider does not support log out. You are logged out of this site but not out of the OpenID Connect provider.', ['@provider' => $client_name]);
-            $response = new TrustedRedirectResponse($redirect_logout_url);
-            $response->addCacheableDependency($redirect_logout_url);
+            $this->messenger()->addWarning($this->t('@provider does not support log out. You are logged out of this site but not out of the OpenID Connect provider.', ['@provider' => $entity->label()]));
+            if ($redirect_logout_url) {
+              $response = new TrustedRedirectResponse($redirect_logout_url);
+              $response->addCacheableDependency($redirect_logout_url);
+            }
           }
           $this->moduleHandler->alter('openid_connect_redirect_logout', $response, $client_name);
         }
