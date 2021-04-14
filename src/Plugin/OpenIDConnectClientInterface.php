@@ -78,7 +78,7 @@ interface OpenIDConnectClientInterface extends ConfigurableInterface, DependentP
   /**
    * Decodes ID token to access user data.
    *
-   * @param string $id_token
+   * @param string|null $id_token
    *   The encoded ID token containing the user data.
    *
    * @return array|null
@@ -89,9 +89,10 @@ interface OpenIDConnectClientInterface extends ConfigurableInterface, DependentP
    *   - exp
    *   - iat
    *   Or NULL on failure.
+   *
    * @see https://openid.net/specs/openid-connect-core-1_0.html#IDToken
    */
-  public function decodeIdToken(string $id_token): ?array;
+  public function decodeIdToken(?string $id_token): ?array;
 
   /**
    * Retrieves user info: additional user profile data.

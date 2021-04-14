@@ -88,7 +88,7 @@ class OpenIDConnectFacebookClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function decodeIdToken(string $id_token): array {
+  public function decodeIdToken(?string $id_token): array {
     return [];
   }
 
