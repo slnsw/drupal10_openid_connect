@@ -5,20 +5,23 @@ namespace Drupal\openid_connect\Controller;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
-use Drupal\Core\Session\AccountProxyInterface;
-use Drupal\externalauth\AuthmapInterface;
-use Drupal\Core\Routing\TrustedRedirectResponse;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Logger\LoggerChannelTrait;
+use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\Routing\Access\AccessInterface;
+use Drupal\Core\Routing\TrustedRedirectResponse;
+use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
+use Drupal\externalauth\AuthmapInterface;
+use Drupal\openid_connect\OpenIDConnect;
 use Drupal\openid_connect\OpenIDConnectClientEntityInterface;
 use Drupal\openid_connect\OpenIDConnectSessionInterface;
-use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
-use Drupal\openid_connect\OpenIDConnect;
 use Drupal\openid_connect\OpenIDConnectStateTokenInterface;
+use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -29,7 +32,11 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  *
  * @package Drupal\openid_connect\Controller
  */
-class OpenIDConnectRedirectController extends ControllerBase implements AccessInterface {
+class OpenIDConnectRedirectController implements ContainerInjectionInterface, AccessInterface {
+
+  use LoggerChannelTrait;
+  use MessengerTrait;
+  use StringTranslationTrait;
 
   /**
    * The OpenID state token service.
@@ -44,13 +51,6 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    * @var \Symfony\Component\HttpFoundation\RequestStack
    */
   protected $requestStack;
-
-  /**
-   * The logger factory.
-   *
-   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
-   */
-  protected $loggerFactory;
 
   /**
    * The OpenID Connect service.
@@ -102,6 +102,13 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
   protected $languageManager;
 
   /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * The constructor.
    *
    * @param \Drupal\openid_connect\OpenIDConnect $openid_connect
@@ -110,8 +117,6 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    *   The OpenID state token service.
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   The request stack.
-   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
-   *   The logger factory.
    * @param \Drupal\openid_connect\OpenIDConnectSessionInterface $session
    *   The OpenID Connect session service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -124,18 +129,20 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
    *   The module handler.
    * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
    *   The language manager service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    */
-  public function __construct(OpenIDConnect $openid_connect, OpenIDConnectStateTokenInterface $state_token, RequestStack $request_stack, LoggerChannelFactoryInterface $logger_factory, OpenIDConnectSessionInterface $session, ConfigFactoryInterface $config_factory, AuthmapInterface $authmap, AccountProxyInterface $current_user, ModuleHandlerInterface $module_handler, LanguageManagerInterface $language_manager) {
+  public function __construct(OpenIDConnect $openid_connect, OpenIDConnectStateTokenInterface $state_token, RequestStack $request_stack, OpenIDConnectSessionInterface $session, ConfigFactoryInterface $config_factory, AuthmapInterface $authmap, AccountProxyInterface $current_user, ModuleHandlerInterface $module_handler, LanguageManagerInterface $language_manager, EntityTypeManagerInterface $entity_type_manager) {
     $this->openIDConnect = $openid_connect;
     $this->stateToken = $state_token;
     $this->requestStack = $request_stack;
-    $this->loggerFactory = $logger_factory;
     $this->session = $session;
     $this->configFactory = $config_factory;
     $this->authmap = $authmap;
     $this->currentUser = $current_user;
     $this->moduleHandler = $module_handler;
     $this->languageManager = $language_manager;
+    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -146,13 +153,13 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
       $container->get('openid_connect.openid_connect'),
       $container->get('openid_connect.state_token'),
       $container->get('request_stack'),
-      $container->get('logger.factory'),
       $container->get('openid_connect.session'),
       $container->get('config.factory'),
       $container->get('externalauth.authmap'),
       $container->get('current_user'),
       $container->get('module_handler'),
-      $container->get('language_manager')
+      $container->get('language_manager'),
+      $container->get('entity_type.manager')
     );
   }
 
@@ -224,7 +231,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
           '@details' => $request->get('error_description') ? $request->get('error_description') : $this->t('Unknown error.'),
         ];
         $message = 'Authorization failed: @error. Details: @details';
-        $this->loggerFactory->get('openid_connect_' . $openid_connect_client->getPluginId())->error($message, $variables);
+        $this->getLogger('openid_connect_' . $openid_connect_client->getPluginId())->error($message, $variables);
         $this->messenger()->addError($this->t('Could not authenticate with @provider.', $provider_param));
       }
     }
@@ -239,7 +246,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
             $this->messenger()->addError($this->t('Logging in with @provider could not be completed due to an error.', $provider_param));
           }
         }
-        elseif (($op === 'connect') && ($uid === (int) $this->currentUser()->id())) {
+        elseif (($op === 'connect') && ($uid === (int) $this->currentUser->id())) {
           $success = $this->openIDConnect->connectCurrentUser($openid_connect_client, $tokens);
           if ($success) {
             $this->messenger()->addMessage($this->t('Account successfully connected with @provider.', $provider_param));
@@ -261,7 +268,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
     $session = $this->session->retrieveDestination();
     $destination = $session['destination'] ?: $this->configFactory->get('openid_connect.settings')->get('redirect_login');
     $langcode = $session['langcode'] ?: $this->languageManager->getCurrentLanguage()->getId();
-    $language = $this->languageManager()->getLanguage($langcode);
+    $language = $this->languageManager->getLanguage($langcode);
 
     $redirect = Url::fromUri('internal:/' . ltrim($destination, '/'), ['language' => $language])->toString();
     return new RedirectResponse($redirect);
@@ -289,7 +296,7 @@ class OpenIDConnectRedirectController extends ControllerBase implements AccessIn
         // Perform log out.
         if (!empty($client_name)) {
           /** @var \Drupal\openid_connect\Entity\OpenIDConnectClientEntity $entity */
-          $entity = $this->entityTypeManager()->getStorage('openid_connect_client')->loadByProperties(['id' => $client_name])[$client_name];
+          $entity = $this->entityTypeManager->getStorage('openid_connect_client')->loadByProperties(['id' => $client_name])[$client_name];
           $endpoints = $entity->getPlugin()->getEndpoints();
 
           $redirect_logout = $this->configFactory->get('openid_connect.settings')->get('redirect_logout');
