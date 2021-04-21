@@ -256,18 +256,18 @@ class OpenIDConnect {
 
     // Whether we have no usable user information.
     if (empty($user_data) && empty($userinfo)) {
-      $this->logger->error('No user information provided by @provider (@code @error). Details: @details', ['@provider' => $provider]);
+      $this->logger->error('No user information provided by @provider', ['@provider' => $provider]);
       return FALSE;
     }
 
     if ($userinfo && empty($userinfo['email'])) {
-      $this->logger->error('No e-mail address provided by @provider (@code @error). Details: @details', ['@provider' => $provider]);
+      $this->logger->error('No e-mail address provided by @provider', ['@provider' => $provider]);
       return FALSE;
     }
 
     $sub = $this->extractSub($user_data, $userinfo);
     if (empty($sub)) {
-      $this->logger->error('No "sub" found from @provider (@code @error). Details: @details', ['@provider' => $provider]);
+      $this->logger->error('No "sub" found from @provider', ['@provider' => $provider]);
       return FALSE;
     }
 

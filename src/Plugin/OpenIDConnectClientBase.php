@@ -415,25 +415,22 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     ];
     $endpoints = $this->getEndpoints();
 
-    $client = $this->httpClient;
     try {
-      $response = $client->get($endpoints['userinfo'], $request_options);
+      $response = $this->httpClient->get($endpoints['userinfo'], $request_options);
       $userinfo = Json::decode((string) $response->getBody());
       return (is_array($userinfo)) ? $userinfo : NULL;
     }
     catch (\Exception $e) {
-      $variables = [
-        '@message' => 'Could not retrieve user profile information',
-        '@error_message' => $e->getMessage(),
-      ];
+      $error = $e->getMessage();
 
       if ($e instanceof RequestException && $e->hasResponse()) {
         $response_body = $e->getResponse()->getBody()->getContents();
-        $variables['@error_message'] .= ' Response: ' . $response_body;
+        $error .= ' Response: ' . $response_body;
       }
 
       $this->loggerFactory->get('openid_connect_' . $this->pluginId)
-        ->error('@message. Details: @error_message', $variables);
+        ->error('Could not retrieve user profile information. Details: @error_message',
+          ['@error_message' => $error]);
     }
     return NULL;
   }
