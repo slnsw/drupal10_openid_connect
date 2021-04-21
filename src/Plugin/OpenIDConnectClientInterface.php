@@ -76,25 +76,6 @@ interface OpenIDConnectClientInterface extends ConfigurableInterface, DependentP
   public function retrieveTokens(string $authorization_code): ?array;
 
   /**
-   * Decodes ID token to access user data.
-   *
-   * @param string|null $id_token
-   *   The encoded ID token containing the user data.
-   *
-   * @return array|null
-   *   User identity information, with at least the following keys:
-   *   - iss
-   *   - sub
-   *   - aud
-   *   - exp
-   *   - iat
-   *   Or NULL on failure.
-   *
-   * @see https://openid.net/specs/openid-connect-core-1_0.html#IDToken
-   */
-  public function decodeIdToken(?string $id_token): ?array;
-
-  /**
    * Retrieves user info: additional user profile data.
    *
    * @param string $access_token
@@ -104,6 +85,14 @@ interface OpenIDConnectClientInterface extends ConfigurableInterface, DependentP
    *   Additional user profile information or NULL on failure.
    */
   public function retrieveUserInfo(string $access_token): ?array;
+
+  /**
+   * Check if the client uses the userinfo endpoint.
+   *
+   * @return bool
+   *   Whether the client uses the userinfo endpoint or not.
+   */
+  public function usesUserInfo(): bool;
 
   /**
    * Return the plugin label as defined in the annotation.

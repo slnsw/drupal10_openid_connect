@@ -361,10 +361,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
 
       // Expected result.
       if (is_array($response_data)) {
-        $tokens = [
-          'id_token' => isset($response_data['id_token']) ? $response_data['id_token'] : NULL,
-          'access_token' => isset($response_data['access_token']) ? $response_data['access_token'] : NULL,
-        ];
+        $tokens = [];
+        if (isset($response_data['id_token'])) {
+          $tokens['id_token'] = $this->parseToken($response_data['id_token']);
+        }
+        if (isset($response_data['access_token'])) {
+          $tokens['access_token'] = $this->parseToken($response_data['access_token']);
+        }
         if (array_key_exists('expires_in', $response_data)) {
           $tokens['expire'] = $this->dateTime->getRequestTime() + $response_data['expires_in'];
         }
@@ -373,7 +376,6 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
         }
         return $tokens;
       }
-
     }
     catch (\Exception $e) {
       $variables = [
@@ -390,17 +392,6 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
         ->error('@message. Details: @error_message', $variables);
     }
     return NULL;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function decodeIdToken(?string $id_token): ?array {
-    list(, $claims64,) = explode('.', $id_token);
-    $claims = Json::decode(base64_decode(
-      str_replace(['-', '_'], ['+', '/'], $claims64)
-    ));
-    return (is_array($claims)) ? $claims : NULL;
   }
 
   /**
@@ -436,6 +427,33 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function usesUserInfo(): bool {
+    return !empty($endpoints['userinfo']);
+  }
+
+  /**
+   * Parse JWT token.
+   *
+   * @param string $token
+   *   The encoded ID token containing the user data.
+   *
+   * @return array|string
+   *   The parsed JWT token or the original string.
+   */
+  protected function parseToken(string $token) {
+    $parts = explode('.', $token, 3);
+    if (count($parts) === 3) {
+      $decoded = Json::decode(base64_decode($parts[1]));
+      if (is_array($decoded)) {
+        return $decoded;
+      }
+    }
+    return $token;
+  }
+
+  /**
    * Returns the redirect URL.
    *
    * @param array $route_parameters
@@ -450,10 +468,11 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    */
   protected function getRedirectUrl(array $route_parameters = [], array $options = []): Url {
     $route_parameters += ['openid_connect_client' => $this->parentEntityId];
-    return Url::fromRoute('openid_connect.redirect_controller_redirect', $route_parameters, [
+    $options += [
       'absolute' => TRUE,
       'language' => $this->languageManager->getLanguage(LanguageInterface::LANGCODE_NOT_APPLICABLE),
-    ]);
+    ];
+    return Url::fromRoute('openid_connect.redirect_controller_redirect', $route_parameters, $options);
   }
 
 }

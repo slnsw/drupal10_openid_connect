@@ -211,9 +211,9 @@ class OpenIDConnect {
    * identify the user.
    *
    * @param array|null $user_data
-   *   The user data from OpenIDConnectClientInterface::decodeIdToken().
+   *   The user data.
    * @param array|null $userinfo
-   *   The user claims from OpenIDConnectClientInterface::retrieveUserInfo().
+   *   The user claims.
    *
    * @return string|false
    *   The sub, or FALSE if there was an error.
@@ -243,8 +243,9 @@ class OpenIDConnect {
    */
   private function buildContext(OpenIDConnectClientEntityInterface $client, array $tokens) {
     $plugin = $client->getPlugin();
-    $user_data = $plugin->decodeIdToken($tokens['id_token']);
-    $userinfo = $plugin->retrieveUserInfo($tokens['access_token']);
+    $user_data = $tokens['id_token'] ?? [];
+    $access_data = $tokens['access_token'] ?? [];
+    $userinfo = $plugin->usesUserInfo() ? $plugin->retrieveUserInfo($tokens['access_token']) : array_merge($access_data, $user_data);
     $provider = $client->getPluginId();
 
     $context = [

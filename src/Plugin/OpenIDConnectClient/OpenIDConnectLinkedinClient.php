@@ -56,13 +56,6 @@ class OpenIDConnectLinkedinClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function decodeIdToken(?string $id_token): array {
-    return [];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function retrieveUserInfo(string $access_token): ?array {
     $userinfo = [];
     $info = parent::retrieveUserInfo($access_token);
