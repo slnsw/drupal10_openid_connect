@@ -3,7 +3,6 @@
 namespace Drupal\openid_connect\Plugin;
 
 use Drupal\Component\Serialization\Json;
-use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\GeneratedUrl;
 use Drupal\Core\Language\LanguageInterface;
@@ -45,15 +44,6 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * @var \GuzzleHttp\ClientInterface
    */
   protected $httpClient;
-
-  /**
-   * The minimum set of scopes for this client.
-   *
-   * @var string[]|null
-   *
-   * @see \Drupal\openid_connect\OpenIDConnectClaims::getScopes()
-   */
-  protected $clientScopes = ['openid', 'email'];
 
   /**
    * The logger factory used for logging.
@@ -184,10 +174,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   public function setConfiguration(array $configuration) {
     $current_configuration = $this->configuration ?: $this->defaultConfiguration();
 
-    $this->configuration = NestedArray::mergeDeep(
-      $current_configuration,
-      $configuration
-    );
+    $this->configuration = array_merge($current_configuration, $configuration);
   }
 
   /**
@@ -258,7 +245,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * {@inheritdoc}
    */
   public function getClientScopes(): ?array {
-    return $this->clientScopes;
+    return ['openid', 'email'];
   }
 
   /**

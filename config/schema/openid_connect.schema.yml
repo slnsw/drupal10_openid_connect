@@ -82,6 +82,11 @@ openid_connect.client.plugin.generic:
     end_session_endpoint:
       type: string
       label: 'End Session endpoint'
+    scopes:
+      type: sequence
+      label: 'Scopes'
+      sequence:
+        type: string
 
 openid_connect.client.plugin.okta:
   type: mapping

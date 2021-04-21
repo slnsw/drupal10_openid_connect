@@ -26,8 +26,9 @@ class OpenIDConnectGenericClient extends OpenIDConnectClientBase {
       'issuer_url' => '',
       'authorization_endpoint' => 'https://example.com/oauth2/authorize',
       'token_endpoint' => 'https://example.com/oauth2/token',
-      'userinfo_endpoint' => 'https://example.com/oauth2/UserInfo',
+      'userinfo_endpoint' => 'https://example.com/oauth2/userinfo',
       'end_session_endpoint' => '',
+      'scopes' => ['openid', 'email'],
     ] + parent::defaultConfiguration();
   }
 
@@ -90,6 +91,13 @@ class OpenIDConnectGenericClient extends OpenIDConnectClientBase {
       ],
     ];
 
+    $form['scopes'] = [
+      '#title' => $this->t('Scopes'),
+      '#type' => 'textfield',
+      '#description' => $this->t('Custom scopes, separated by spaces, for example: openid email'),
+      '#default_value' => implode(' ', $this->configuration['scopes']),
+    ];
+
     return $form;
   }
 
@@ -125,7 +133,18 @@ class OpenIDConnectGenericClient extends OpenIDConnectClientBase {
     // value of the issuer_url setting.
     $this->unsetConfigurationKeys(['use_well_known']);
 
+    if (!empty($configuration['scopes'])) {
+      $this->setConfiguration(['scopes' => explode(' ', $configuration['scopes'])]);
+    }
+
     parent::submitConfigurationForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getClientScopes(): ?array {
+    return $this->configuration['scopes'];
   }
 
   /**

@@ -260,3 +260,18 @@ function openid_connect_update_8207() {
   $config->set('redirect_logout', '');
   $config->save(TRUE);
 }
+
+/**
+ * Update generic plugins with scopes.
+ */
+function openid_connect_update_8208() {
+  $clients = \Drupal::entityTypeManager()->getStorage('openid_connect_client')->loadByProperties(['plugin' => 'generic']);
+
+  foreach ($clients as $client) {
+    $config = $client->getPlugin()->getConfiguration();
+    if (empty($config['scopes'])) {
+      $client->getPlugin()->setConfiguration(['scopes' => ['openid', 'email']]);
+      $client->save();
+    }
+  }
+}
