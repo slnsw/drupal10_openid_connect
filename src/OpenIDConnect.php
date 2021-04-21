@@ -243,9 +243,20 @@ class OpenIDConnect {
    */
   private function buildContext(OpenIDConnectClientEntityInterface $client, array $tokens) {
     $plugin = $client->getPlugin();
-    $user_data = $tokens['id_token'] ?? [];
-    $access_data = $tokens['access_token'] ?? [];
-    $userinfo = $plugin->usesUserInfo() ? $plugin->retrieveUserInfo($tokens['access_token']) : array_merge($access_data, $user_data);
+    $user_data = $tokens['id_token'];
+    $access_data = $tokens['access_token'];
+    if ($plugin->usesUserInfo()) {
+      $userinfo = $plugin->retrieveUserInfo($tokens['access_token']);
+    }
+    elseif (is_array($user_data)) {
+      $userinfo = $user_data;
+    }
+    elseif (is_array($access_data)) {
+      $userinfo = $access_data;
+    }
+    else {
+      $userinfo = [];
+    }
     $provider = $client->getPluginId();
 
     $context = [
