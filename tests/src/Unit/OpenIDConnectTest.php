@@ -281,11 +281,9 @@ class OpenIDConnectTest extends UnitTestCase {
    * Test the extractSub method.
    *
    * @param array $userData
-   *   The user data as returned from
-   *   OpenIDConnectClientInterface::decodeIdToken().
+   *   The user data.
    * @param array $userInfo
-   *   The user claims as returned from
-   *   OpenIDConnectClientInterface::retrieveUserInfo().
+   *   The user claims.
    * @param bool|string $expected
    *   The expected result from the test.
    *
@@ -578,11 +576,6 @@ class OpenIDConnectTest extends UnitTestCase {
     }
     else {
       $client->expects($this->once())
-        ->method('decodeIdToken')
-        ->with($tokens['id_token'])
-        ->willReturn($userData);
-
-      $client->expects($this->once())
         ->method('retrieveUserInfo')
         ->with($tokens['access_token'])
         ->willReturn($userInfo);
@@ -635,7 +628,7 @@ class OpenIDConnectTest extends UnitTestCase {
           $this->oidcLogger->expects($this->once())
             ->method('error')
             ->with(
-              'No user information provided by @provider (@code @error). Details: @details',
+              'No user information provided by @provider',
               ['@provider' => $clientPluginId]
             );
         }
@@ -644,7 +637,7 @@ class OpenIDConnectTest extends UnitTestCase {
           $this->oidcLogger->expects($this->once())
             ->method('error')
             ->with(
-              'No e-mail address provided by @provider (@code @error). Details: @details',
+              'No e-mail address provided by @provider',
               ['@provider' => $clientPluginId]
             );
         }
@@ -1136,11 +1129,6 @@ class OpenIDConnectTest extends UnitTestCase {
     }
     else {
       $client->expects($this->once())
-        ->method('decodeIdToken')
-        ->with($tokens['id_token'])
-        ->willReturn($userData);
-
-      $client->expects($this->once())
         ->method('retrieveUserInfo')
         ->with($tokens['access_token'])
         ->willReturn($userInfo);
@@ -1161,7 +1149,7 @@ class OpenIDConnectTest extends UnitTestCase {
         $this->oidcLogger->expects($this->once())
           ->method('error')
           ->with(
-            'No user information provided by @provider (@code @error). Details: @details',
+            'No user information provided by @provider',
             ['@provider' => $pluginId]
           );
       }
@@ -1170,7 +1158,7 @@ class OpenIDConnectTest extends UnitTestCase {
         $this->oidcLogger->expects($this->once())
           ->method('error')
           ->with(
-            'No e-mail address provided by @provider (@code @error). Details: @details',
+            'No e-mail address provided by @provider',
             ['@provider' => $pluginId]
           );
       }

@@ -469,13 +469,8 @@ class OpenIDConnect {
       $this->saveUserinfo($account, $context);
     }
 
-    $this->moduleHandler->invokeAll(
-      'openid_connect_post_authorize',
-      [
-        $account,
-        $context,
-      ]
-    );
+    $this->moduleHandler->invokeAll('openid_connect_post_authorize',
+      [$account, $context]);
 
     return TRUE;
   }
@@ -619,11 +614,7 @@ class OpenIDConnect {
             'property_type' => $property_type,
             'userinfo_mappings' => $userinfo_mappings,
           ];
-          $this->moduleHandler->alter(
-            'openid_connect_userinfo_claim',
-            $claim_value,
-            $claim_context
-          );
+          $this->moduleHandler->alter('openid_connect_userinfo_claim', $claim_value, $claim_context);
 
           // Set the user property, while ignoring exceptions from invalid
           // values.
@@ -659,20 +650,12 @@ class OpenIDConnect {
                   }
                 }
 
-                $account->set(
-                  $property_name,
-                  [
-                    'target_id' => $file->id(),
-                  ]
-                );
+                $account->set($property_name, ['target_id' => $file->id()]);
                 break;
 
               default:
-                $this->logger->error(
-                  'Could not save user info, property type not implemented: %property_type',
-                  [
-                    '%property_type' => $property_type,
-                  ]
+                $this->logger->error('Could not save user info, property type not implemented: %property_type',
+                  ['%property_type' => $property_type]
                 );
                 break;
 
@@ -693,10 +676,9 @@ class OpenIDConnect {
     }
 
     // Allow other modules to add additional user information.
-    $this->moduleHandler->invokeAll('openid_connect_userinfo_save', [
-      $account,
-      $context,
-    ]);
+    $this->moduleHandler->invokeAll('openid_connect_userinfo_save',
+      [$account, $context]
+    );
 
     try {
       $account->save();
