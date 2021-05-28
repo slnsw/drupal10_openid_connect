@@ -417,7 +417,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * {@inheritdoc}
    */
   public function usesUserInfo(): bool {
-    return !empty($endpoints['userinfo']);
+    return !empty($this->getEndpoints()['userinfo']);
   }
 
   /**
