@@ -517,7 +517,6 @@ class OpenIDConnect {
   public function createUser(string $sub, array $userinfo, string $client_name, int $status = 1): ?UserInterface {
     $account_data = [
       'name' => $this->generateUsername($sub, $userinfo, $client_name),
-      'pass' => user_password(),
       'mail' => $userinfo['email'],
       'init' => $userinfo['email'],
       'status' => $status,
