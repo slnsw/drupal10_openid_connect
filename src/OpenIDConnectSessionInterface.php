@@ -51,6 +51,44 @@ interface OpenIDConnectSessionInterface extends ContainerInjectionInterface {
   public function saveOp(string $op, int $uid = NULL);
 
   /**
+   * Get the id token from the session.
+   *
+   * @param bool $clear
+   *   The value is cleared from the session, if this is set to TRUE.
+   *
+   * @return string|null
+   *   The id token.
+   */
+  public function retrieveIdToken(bool $clear = FALSE): ?string;
+
+  /**
+   * Save the id token in the session.
+   *
+   * @param string $token
+   *   The id token.
+   */
+  public function saveIdToken(string $token);
+
+  /**
+   * Get the access token from the session.
+   *
+   * @param bool $clear
+   *   The value is cleared from the session, if this is set to TRUE.
+   *
+   * @return string|null
+   *   The access token.
+   */
+  public function retrieveAccessToken(bool $clear = FALSE): ?string;
+
+  /**
+   * Save the access token in the session.
+   *
+   * @param string $token
+   *   The access token.
+   */
+  public function saveAccessToken(string $token);
+
+  /**
    * Get the state token from the session.
    *
    * @param bool $clear
@@ -64,9 +102,9 @@ interface OpenIDConnectSessionInterface extends ContainerInjectionInterface {
   /**
    * Save the state token in the session.
    *
-   * @param string $state
+   * @param string $token
    *   The state token.
    */
-  public function saveStateToken(string $state);
+  public function saveStateToken(string $token);
 
 }

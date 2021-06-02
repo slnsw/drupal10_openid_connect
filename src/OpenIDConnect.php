@@ -110,6 +110,13 @@ class OpenIDConnect {
   private $fileSystem;
 
   /**
+   * The OpenID Connect session service.
+   *
+   * @var \Drupal\openid_connect\OpenIDConnectSessionInterface
+   */
+  protected $session;
+
+  /**
    * Construct an instance of the OpenID Connect service.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -136,6 +143,8 @@ class OpenIDConnect {
    *   A logger channel factory instance.
    * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The file system service.
+   * @param \Drupal\openid_connect\OpenIDConnectSessionInterface $session
+   *   The OpenID Connect session service.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
@@ -152,7 +161,8 @@ class OpenIDConnect {
     MessengerInterface $messenger,
     ModuleHandlerInterface $module_handler,
     LoggerChannelFactoryInterface $logger,
-    FileSystemInterface $fileSystem
+    FileSystemInterface $fileSystem,
+    OpenIDConnectSessionInterface $session
   ) {
     $this->configFactory = $config_factory;
     $this->authmap = $authmap;
@@ -166,6 +176,7 @@ class OpenIDConnect {
     $this->moduleHandler = $module_handler;
     $this->logger = $logger->get('openid_connect');
     $this->fileSystem = $fileSystem;
+    $this->session = $session;
   }
 
   /**
@@ -423,6 +434,8 @@ class OpenIDConnect {
     }
 
     $this->externalAuth->userLoginFinalize($account, $context['sub'], 'openid_connect.' . $client->id());
+    $this->session->saveIdToken($tokens['id_token']);
+    $this->session->saveAccessToken($tokens['access_token']);
 
     $this->moduleHandler
       ->invokeAll('openid_connect_post_authorize', [$account, $context]);

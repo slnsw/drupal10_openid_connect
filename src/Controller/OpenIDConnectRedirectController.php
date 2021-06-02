@@ -304,9 +304,11 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
 
           // Destroy session if provider supports it.
           if (!empty($endpoints['end_session'])) {
-            $url_options = ['language' => $language];
+            $url_options = [
+              'query' => ['id_token_hint' => $this->session->retrieveIdToken()],
+            ];
             if ($redirect_logout_url) {
-              $url_options['query']['redirect_logout'] = $redirect_logout_url;
+              $url_options['query']['post_logout_redirect_uri'] = $redirect_logout_url;
             }
             $redirect = Url::fromUri($endpoints['end_session'], $url_options)->toString(TRUE);
             $response = new TrustedRedirectResponse($redirect->getGeneratedUrl());
