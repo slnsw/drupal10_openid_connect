@@ -350,10 +350,10 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       if (is_array($response_data)) {
         $tokens = [];
         if (isset($response_data['id_token'])) {
-          $tokens['id_token'] = $this->parseToken($response_data['id_token']);
+          $tokens['id_token'] = $response_data['id_token'];
         }
         if (isset($response_data['access_token'])) {
-          $tokens['access_token'] = $this->parseToken($response_data['access_token']);
+          $tokens['access_token'] = $response_data['access_token'];
         }
         if (array_key_exists('expires_in', $response_data)) {
           $tokens['expire'] = $this->dateTime->getRequestTime() + $response_data['expires_in'];
@@ -365,18 +365,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       }
     }
     catch (\Exception $e) {
-      $variables = [
-        '@message' => 'Could not retrieve tokens',
-        '@error_message' => $e->getMessage(),
-      ];
-
+      $error_message = $e->getMessage();
       if ($e instanceof RequestException && $e->hasResponse()) {
-        $response_body = $e->getResponse()->getBody()->getContents();
-        $variables['@error_message'] .= ' Response: ' . $response_body;
+        $error_message .= ' Response: ' . $e->getResponse()->getBody()->getContents();
       }
 
       $this->loggerFactory->get('openid_connect_' . $this->pluginId)
-        ->error('@message. Details: @error_message', $variables);
+        ->error('Could not retrieve tokens. Details: @error_message', ['@error_message' => $error_message]);
     }
     return NULL;
   }
@@ -418,26 +413,6 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    */
   public function usesUserInfo(): bool {
     return !empty($this->getEndpoints()['userinfo']);
-  }
-
-  /**
-   * Parse JWT token.
-   *
-   * @param string $token
-   *   The encoded ID token containing the user data.
-   *
-   * @return array|string
-   *   The parsed JWT token or the original string.
-   */
-  protected function parseToken(string $token) {
-    $parts = explode('.', $token, 3);
-    if (count($parts) === 3) {
-      $decoded = Json::decode(base64_decode($parts[1]));
-      if (is_array($decoded)) {
-        return $decoded;
-      }
-    }
-    return $token;
   }
 
   /**

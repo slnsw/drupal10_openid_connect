@@ -2,6 +2,7 @@
 
 namespace Drupal\openid_connect;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\EmailValidatorInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
@@ -254,14 +255,16 @@ class OpenIDConnect {
    */
   private function buildContext(OpenIDConnectClientEntityInterface $client, array $tokens) {
     $plugin = $client->getPlugin();
-    if ($plugin->usesUserInfo() && is_string($tokens['access_token'])) {
-      $userinfo = $plugin->retrieveUserInfo($tokens['access_token']);
+    $user_data = $this->parseToken($tokens['id_token']);
+    $access_data = $this->parseToken($tokens['access_token']);
+    if ($plugin->usesUserInfo() && is_string($access_data)) {
+      $userinfo = $plugin->retrieveUserInfo($access_data);
     }
-    elseif (is_array($tokens['id_token'])) {
-      $userinfo = $tokens['id_token'];
+    elseif (is_array($user_data)) {
+      $userinfo = $user_data;
     }
-    elseif (is_array($tokens['access_token'])) {
-      $userinfo = $tokens['access_token'];
+    elseif (is_array($access_data)) {
+      $userinfo = $access_data;
     }
     else {
       $userinfo = [];
@@ -271,12 +274,12 @@ class OpenIDConnect {
     $context = [
       'tokens' => $tokens,
       'plugin_id' => $provider,
-      'user_data' => $tokens['id_token'] ?? [],
+      'user_data' => $user_data,
     ];
     $this->moduleHandler->alter('openid_connect_userinfo', $userinfo, $context);
 
     // Whether we have no usable user information.
-    if (empty($tokens['id_token']) && empty($userinfo)) {
+    if (empty($user_data) && empty($userinfo)) {
       $this->logger->error('No user information provided by @provider', ['@provider' => $provider]);
       return FALSE;
     }
@@ -286,7 +289,7 @@ class OpenIDConnect {
       return FALSE;
     }
 
-    $sub = is_array($tokens['id_token']) ? $this->extractSub($tokens['id_token'], $userinfo) : FALSE;
+    $sub = is_array($user_data) ? $this->extractSub($user_data, $userinfo) : FALSE;
     if (empty($sub)) {
       $this->logger->error('No "sub" found from @provider', ['@provider' => $provider]);
       return FALSE;
@@ -297,7 +300,7 @@ class OpenIDConnect {
     $context = [
       'tokens' => $tokens,
       'plugin_id' => $provider,
-      'user_data' => $tokens['id_token'] ?? [],
+      'user_data' => $user_data,
       'userinfo' => $userinfo,
       'sub' => $sub,
       'account' => $account,
@@ -697,6 +700,26 @@ class OpenIDConnect {
     catch (EntityStorageException $e) {
       return FALSE;
     }
+  }
+
+  /**
+   * Parse JWT token.
+   *
+   * @param string $token
+   *   The encoded ID token containing the user data.
+   *
+   * @return array|string
+   *   The parsed JWT token or the original string.
+   */
+  protected function parseToken(string $token) {
+    $parts = explode('.', $token, 3);
+    if (count($parts) === 3) {
+      $decoded = Json::decode(base64_decode($parts[1]));
+      if (is_array($decoded)) {
+        return $decoded;
+      }
+    }
+    return $token;
   }
 
 }
