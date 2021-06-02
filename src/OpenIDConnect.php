@@ -254,16 +254,14 @@ class OpenIDConnect {
    */
   private function buildContext(OpenIDConnectClientEntityInterface $client, array $tokens) {
     $plugin = $client->getPlugin();
-    $user_data = $tokens['id_token'];
-    $access_data = $tokens['access_token'];
-    if ($plugin->usesUserInfo()) {
+    if ($plugin->usesUserInfo() && is_string($tokens['access_token'])) {
       $userinfo = $plugin->retrieveUserInfo($tokens['access_token']);
     }
-    elseif (is_array($user_data)) {
-      $userinfo = $user_data;
+    elseif (is_array($tokens['id_token'])) {
+      $userinfo = $tokens['id_token'];
     }
-    elseif (is_array($access_data)) {
-      $userinfo = $access_data;
+    elseif (is_array($tokens['access_token'])) {
+      $userinfo = $tokens['access_token'];
     }
     else {
       $userinfo = [];
@@ -273,12 +271,12 @@ class OpenIDConnect {
     $context = [
       'tokens' => $tokens,
       'plugin_id' => $provider,
-      'user_data' => $user_data,
+      'user_data' => $tokens['id_token'] ?? [],
     ];
     $this->moduleHandler->alter('openid_connect_userinfo', $userinfo, $context);
 
     // Whether we have no usable user information.
-    if (empty($user_data) && empty($userinfo)) {
+    if (empty($tokens['id_token']) && empty($userinfo)) {
       $this->logger->error('No user information provided by @provider', ['@provider' => $provider]);
       return FALSE;
     }
@@ -288,7 +286,7 @@ class OpenIDConnect {
       return FALSE;
     }
 
-    $sub = $this->extractSub($user_data, $userinfo);
+    $sub = is_array($tokens['id_token']) ? $this->extractSub($tokens['id_token'], $userinfo) : FALSE;
     if (empty($sub)) {
       $this->logger->error('No "sub" found from @provider', ['@provider' => $provider]);
       return FALSE;
@@ -299,7 +297,7 @@ class OpenIDConnect {
     $context = [
       'tokens' => $tokens,
       'plugin_id' => $provider,
-      'user_data' => $user_data,
+      'user_data' => $tokens['id_token'] ?? [],
       'userinfo' => $userinfo,
       'sub' => $sub,
       'account' => $account,
