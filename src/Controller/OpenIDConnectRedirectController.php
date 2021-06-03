@@ -300,7 +300,7 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
           $endpoints = $entity->getPlugin()->getEndpoints();
 
           $redirect_logout = $this->configFactory->get('openid_connect.settings')->get('redirect_logout');
-          $redirect_logout_url = $redirect_logout ? Url::fromUri('internal:/' . ltrim($redirect_logout, '/'), ['language' => $language])->toString(TRUE)->getGeneratedUrl() : '';
+          $redirect_logout_url = empty($redirect_logout) ? FALSE : Url::fromUri('internal:/' . ltrim($redirect_logout, '/'), ['language' => $language]);
 
           // Destroy session if provider supports it.
           if (!empty($endpoints['end_session'])) {
@@ -308,7 +308,7 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
               'query' => ['id_token_hint' => $this->session->retrieveIdToken()],
             ];
             if ($redirect_logout_url) {
-              $url_options['query']['post_logout_redirect_uri'] = $redirect_logout_url;
+              $url_options['query']['post_logout_redirect_uri'] = $redirect_logout_url->setAbsolute()->toString()->getGeneratedUrl();
             }
             $redirect = Url::fromUri($endpoints['end_session'], $url_options)->toString(TRUE);
             $response = new TrustedRedirectResponse($redirect->getGeneratedUrl());
@@ -317,8 +317,9 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
           else {
             $this->messenger()->addWarning($this->t('@provider does not support log out. You are logged out of this site but not out of the OpenID Connect provider.', ['@provider' => $entity->label()]));
             if ($redirect_logout_url) {
-              $response = new TrustedRedirectResponse($redirect_logout_url);
-              $response->addCacheableDependency($redirect_logout_url);
+              $url = $redirect_logout_url->toString(TRUE)->getGeneratedUrl();
+              $response = new TrustedRedirectResponse($url);
+              $response->addCacheableDependency($url);
             }
           }
           $this->moduleHandler->alter('openid_connect_redirect_logout', $response, $client_name);
