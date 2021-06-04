@@ -257,8 +257,8 @@ class OpenIDConnect {
     $plugin = $client->getPlugin();
     $user_data = $this->parseToken($tokens['id_token']);
     $access_data = $this->parseToken($tokens['access_token']);
-    if ($plugin->usesUserInfo() && is_string($access_data)) {
-      $userinfo = $plugin->retrieveUserInfo($access_data);
+    if ($plugin->usesUserInfo()) {
+      $userinfo = $plugin->retrieveUserInfo($tokens['access_token']);
     }
     elseif (is_array($user_data)) {
       $userinfo = $user_data;
