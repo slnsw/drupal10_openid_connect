@@ -29,11 +29,11 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientCollection;
  *     "status" = "status"
  *   },
  *   links = {
- *     "edit-form" = "/admin/config/services/openid-connect/{openid_connect_client}/edit",
- *     "delete-form" = "/admin/config/services/openid-connect/{openid_connect_client}/delete",
- *     "enable" = "/admin/config/services/openid-connect/{openid_connect_client}/enable",
- *     "disable" = "/admin/config/services/openid-connect/{openid_connect_client}/disable",
- *     "collection" = "/admin/config/services/openid-connect",
+ *     "edit-form" = "/admin/config/people/openid-connect/{openid_connect_client}/edit",
+ *     "delete-form" = "/admin/config/people/openid-connect/{openid_connect_client}/delete",
+ *     "enable" = "/admin/config/people/openid-connect/{openid_connect_client}/enable",
+ *     "disable" = "/admin/config/people/openid-connect/{openid_connect_client}/disable",
+ *     "collection" = "/admin/config/people/openid-connect",
  *   },
  *   config_export = {
  *     "id",
