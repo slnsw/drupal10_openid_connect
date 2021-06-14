@@ -269,7 +269,7 @@ class OpenIDConnect {
     else {
       $userinfo = [];
     }
-    $provider = $client->getPluginId();
+    $provider = $client->id();
 
     $context = [
       'tokens' => $tokens,
