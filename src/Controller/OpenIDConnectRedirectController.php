@@ -311,7 +311,7 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
               'query' => ['id_token_hint' => $this->session->retrieveIdToken()],
             ];
             if ($redirect_logout_url) {
-              $url_options['query']['post_logout_redirect_uri'] = $redirect_logout_url->setAbsolute()->toString();
+              $url_options['query']['post_logout_redirect_uri'] = $redirect_logout_url->setAbsolute()->toString(TRUE)->getGeneratedUrl();
             }
             $redirect = Url::fromUri($endpoints['end_session'], $url_options)->toString(TRUE);
             $response = new TrustedRedirectResponse($redirect->getGeneratedUrl());
