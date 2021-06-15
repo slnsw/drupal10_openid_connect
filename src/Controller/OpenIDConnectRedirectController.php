@@ -299,11 +299,14 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
           $entity = $this->entityTypeManager->getStorage('openid_connect_client')->loadByProperties(['id' => $client_name])[$client_name];
           $endpoints = $entity->getPlugin()->getEndpoints();
 
-          $redirect_logout = $this->configFactory->get('openid_connect.settings')->get('redirect_logout');
+          $config = $this->configFactory->get('openid_connect.settings');
+
+          $redirect_logout = $config->get('redirect_logout');
           $redirect_logout_url = empty($redirect_logout) ? FALSE : Url::fromUri('internal:/' . ltrim($redirect_logout, '/'), ['language' => $language]);
 
           // Destroy session if provider supports it.
-          if (!empty($endpoints['end_session'])) {
+          $end_session_enabled = $config->get('end_session_enabled') ?? FALSE;
+          if ($end_session_enabled && !empty($endpoints['end_session'])) {
             $url_options = [
               'query' => ['id_token_hint' => $this->session->retrieveIdToken()],
             ];
@@ -315,7 +318,9 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
             $response->addCacheableDependency($redirect);
           }
           else {
-            $this->messenger()->addWarning($this->t('@provider does not support log out. You are logged out of this site but not out of the OpenID Connect provider.', ['@provider' => $entity->label()]));
+            if (!$end_session_enabled) {
+              $this->messenger()->addWarning($this->t('@provider does not support log out. You are logged out of this site but not out of the OpenID Connect provider.', ['@provider' => $entity->label()]));
+            }
             if ($redirect_logout_url) {
               $url = $redirect_logout_url->toString(TRUE)->getGeneratedUrl();
               $response = new TrustedRedirectResponse($url);

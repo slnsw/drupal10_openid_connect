@@ -118,6 +118,13 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
       '#default_value' => $settings->get('override_registration_settings'),
     ];
 
+    $form['end_session_enabled'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Logout from identity provider'),
+      '#description' => $this->t('If enabled and supported by the identity provider, logging out from Drupal will also logout the user from the identity provider.'),
+      '#default_value' => $settings->get('end_session_enabled'),
+    ];
+
     $form['user_login_display'] = [
       '#type' => 'radios',
       '#title' => $this->t('OpenID buttons display in user login form'),

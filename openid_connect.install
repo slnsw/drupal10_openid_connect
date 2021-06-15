@@ -275,3 +275,12 @@ function openid_connect_update_8208() {
     }
   }
 }
+
+/**
+ * Set default value for end_session_enabled setting.
+ */
+function openid_connect_update_8209() {
+  $config = \Drupal::configFactory()->getEditable('openid_connect.settings');
+  $config->set('end_session_enabled', TRUE);
+  $config->save(TRUE);
+}
