@@ -81,6 +81,13 @@ class OpenIDConnectClientEntity extends ConfigEntityBase implements OpenIDConnec
   protected $pluginManager;
 
   /**
+   * The external authmap service.
+   *
+   * @var \Drupal\externalauth\AuthmapInterface
+   */
+  protected $authmap;
+
+  /**
    * The plugin collection that holds the openid_connect_client for this entity.
    *
    * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientCollection
@@ -93,6 +100,7 @@ class OpenIDConnectClientEntity extends ConfigEntityBase implements OpenIDConnec
   public function __construct(array $values, $entity_type) {
     parent::__construct($values, $entity_type);
     $this->pluginManager = \Drupal::service('plugin.manager.openid_connect_client');
+    $this->authmap = \Drupal::service('externalauth.authmap');
   }
 
   /**
@@ -127,6 +135,16 @@ class OpenIDConnectClientEntity extends ConfigEntityBase implements OpenIDConnec
    */
   public function getPluginCollections(): array {
     return ['settings' => $this->getPluginCollection()];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delete() {
+    // Delete all entries in the authmap for this client.
+    $this->authmap->deleteProvider('open_connect.' . $this->id());
+
+    parent::delete();
   }
 
 }

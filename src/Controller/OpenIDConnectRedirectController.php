@@ -296,26 +296,28 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
         // Perform log out.
         if (!empty($client_name)) {
           /** @var \Drupal\openid_connect\Entity\OpenIDConnectClientEntity $entity */
-          $entity = $this->entityTypeManager->getStorage('openid_connect_client')->loadByProperties(['id' => $client_name])[$client_name];
-          $endpoints = $entity->getPlugin()->getEndpoints();
+          $entity = current($this->entityTypeManager->getStorage('openid_connect_client')->loadByProperties(['id' => $client_name]));
+          if ($entity) {
+            $endpoints = $entity->getPlugin()->getEndpoints();
 
-          $config = $this->configFactory->get('openid_connect.settings');
+            $config = $this->configFactory->get('openid_connect.settings');
 
-          $redirect_logout = $config->get('redirect_logout');
-          $redirect_logout_url = empty($redirect_logout) ? FALSE : Url::fromUri('internal:/' . ltrim($redirect_logout, '/'), ['language' => $language]);
+            $redirect_logout = $config->get('redirect_logout');
+            $redirect_logout_url = empty($redirect_logout) ? FALSE : Url::fromUri('internal:/' . ltrim($redirect_logout, '/'), ['language' => $language]);
 
-          // Destroy session if provider supports it.
-          $end_session_enabled = $config->get('end_session_enabled') ?? FALSE;
-          if ($end_session_enabled && !empty($endpoints['end_session'])) {
-            $url_options = [
-              'query' => ['id_token_hint' => $this->session->retrieveIdToken()],
-            ];
-            if ($redirect_logout_url) {
-              $url_options['query']['post_logout_redirect_uri'] = $redirect_logout_url->setAbsolute()->toString(TRUE)->getGeneratedUrl();
+            // Destroy session if provider supports it.
+            $end_session_enabled = $config->get('end_session_enabled') ?? FALSE;
+            if ($end_session_enabled && !empty($endpoints['end_session'])) {
+              $url_options = [
+                'query' => ['id_token_hint' => $this->session->retrieveIdToken()],
+              ];
+              if ($redirect_logout_url) {
+                $url_options['query']['post_logout_redirect_uri'] = $redirect_logout_url->setAbsolute()->toString(TRUE)->getGeneratedUrl();
+              }
+              $redirect = Url::fromUri($endpoints['end_session'], $url_options)->toString(TRUE);
+              $response = new TrustedRedirectResponse($redirect->getGeneratedUrl());
+              $response->addCacheableDependency($redirect);
             }
-            $redirect = Url::fromUri($endpoints['end_session'], $url_options)->toString(TRUE);
-            $response = new TrustedRedirectResponse($redirect->getGeneratedUrl());
-            $response->addCacheableDependency($redirect);
           }
           else {
             if (!$end_session_enabled) {
