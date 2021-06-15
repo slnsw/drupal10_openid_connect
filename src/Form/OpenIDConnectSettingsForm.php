@@ -4,6 +4,7 @@ namespace Drupal\openid_connect\Form;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\OpenIDConnect;
@@ -18,6 +19,20 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class OpenIDConnectSettingsForm extends ConfigFormBase {
 
   /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
+   * The entity field manager.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
+   */
+  protected $entityFieldManager;
+
+  /**
    * The OpenID Connect service.
    *
    * @var \Drupal\openid_connect\OpenIDConnect
@@ -25,42 +40,31 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
   protected $openIDConnect;
 
   /**
-   * The entity manager.
-   *
-   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
-   */
-  protected $entityFieldManager;
-
-  /**
-   * The OpenID Connect claims.
+   * The OpenID Connect claims service.
    *
    * @var \Drupal\openid_connect\OpenIDConnectClaims
    */
   protected $claims;
 
   /**
-   * OpenID Connect client plugins.
-   *
-   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface[]
-   */
-  protected static $clients;
-
-  /**
    * The constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
-   * @param \Drupal\openid_connect\OpenIDConnect $openid_connect
-   *   The OpenID Connect service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager
    *   The entity field manager.
+   * @param \Drupal\openid_connect\OpenIDConnect $openid_connect
+   *   The OpenID Connect service.
    * @param \Drupal\openid_connect\OpenIDConnectClaims $claims
    *   The claims.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, OpenIDConnect $openid_connect, EntityFieldManagerInterface $entity_field_manager, OpenIDConnectClaims $claims) {
+  public function __construct(ConfigFactoryInterface $config_factory, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, OpenIDConnect $openid_connect, OpenIDConnectClaims $claims) {
     parent::__construct($config_factory);
-    $this->openIDConnect = $openid_connect;
+    $this->entityTypeManager = $entity_type_manager;
     $this->entityFieldManager = $entity_field_manager;
+    $this->openIDConnect = $openid_connect;
     $this->claims = $claims;
   }
 
@@ -70,8 +74,9 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('openid_connect.openid_connect'),
+      $container->get('entity_type.manager'),
       $container->get('entity_field.manager'),
+      $container->get('openid_connect.openid_connect'),
       $container->get('openid_connect.claims')
     );
   }
@@ -184,7 +189,28 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
         '#options' => (array) $claims,
         '#empty_value' => '',
         '#empty_option' => $this->t('- No mapping -'),
-        '#default_value' => isset($mappings[$property_name]) ? $mappings[$property_name] : $default_value,
+        '#default_value' => $mappings[$property_name] ?? $default_value,
+      ];
+    }
+
+    /** @var \Drupal\user\Entity\Role[] $roles */
+    $roles = $this->entityTypeManager->getStorage('user_role')->loadMultiple();
+    unset($roles['anonymous']);
+    unset($roles['authenticated']);
+    $role_mappings = $settings->get('role_mappings');
+
+    $form['role_mappings'] = [
+      '#title' => 'EXPERIMENTAL - ' . $this->t('User role mapping'),
+      '#type' => 'fieldset',
+      '#description' => 'For each Drupal role, provide the sets of equivalent external groups. A user belonging to one of the provided groups will be assigned the configured Drupal role. Use client_id.group to limit a group to a specific client.',
+      '#tree' => TRUE,
+    ];
+
+    foreach ($roles as $role_id => $role) {
+      $form['role_mappings'][$role_id] = [
+        '#title' => $role->label(),
+        '#type' => 'textfield',
+        '#default_value' => implode(' ', $role_mappings[$role_id] ?? []),
       ];
     }
 
@@ -197,6 +223,11 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     parent::submitForm($form, $form_state);
 
+    $role_mappings = [];
+    foreach ($form_state->getValue('role_mappings') as $role => $mapping) {
+      $role_mappings[$role] = array_values(array_filter(explode(' ', $mapping)));
+    }
+
     $this->config('openid_connect.settings')
       ->set('always_save_userinfo', $form_state->getValue('always_save_userinfo'))
       ->set('connect_existing_users', $form_state->getValue('connect_existing_users'))
@@ -205,6 +236,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
       ->set('redirect_login', $form_state->getValue('redirect_login'))
       ->set('redirect_logout', $form_state->getValue('redirect_logout'))
       ->set('userinfo_mappings', array_filter($form_state->getValue('userinfo_mappings')))
+      ->set('role_mappings', $role_mappings)
       ->save();
   }
 

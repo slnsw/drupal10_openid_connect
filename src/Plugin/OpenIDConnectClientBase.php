@@ -274,6 +274,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $this->requestStack->getCurrentRequest()->query->remove('destination');
     $authorization_endpoint = Url::fromUri($endpoints['authorization'], $url_options)->toString(TRUE);
 
+    $this->loggerFactory->get('openid_connect_' . $this->pluginId)->debug('Send authorize request to @url', ['@url' => $authorization_endpoint->getGeneratedUrl()]);
     $response = new TrustedRedirectResponse($authorization_endpoint->getGeneratedUrl());
     // We can't cache the response, since this will prevent the state to be
     // added to the session. The kill switch will prevent the page getting
@@ -391,6 +392,10 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     try {
       $response = $this->httpClient->get($endpoints['userinfo'], $request_options);
       $userinfo = Json::decode((string) $response->getBody());
+
+      $this->loggerFactory->get('openid_connect_' . $this->pluginId)->debug('Response from userinfo endpoint: @userinfo',
+        ['@userinfo' => print_r($userinfo, TRUE)]);
+
       return (is_array($userinfo)) ? $userinfo : NULL;
     }
     catch (\Exception $e) {

@@ -114,20 +114,14 @@ class OpenIDConnectClaims implements ContainerInjectionInterface {
    * @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
    */
   public function getScopes(OpenIDConnectClientInterface $client = NULL): string {
-    $claims = $this->configFactory
-      ->getEditable('openid_connect.settings')
-      ->get('userinfo_mappings');
-
     // If a client was provided, get the scopes from it.
     $scopes = !empty($client) ? $client->getClientScopes() : $this->defaultScopes;
 
     $claims_info = $this->getClaims();
+    $claims = $this->configFactory->getEditable('openid_connect.settings')->get('userinfo_mappings');
     foreach ($claims as $claim) {
-      if (isset($claims_info[$claim]) &&
-          !isset($scopes[$claims_info[$claim]['scope']]) &&
-          $claim != 'email') {
-
-        $scopes[$claims_info[$claim]['scope']] = $claims_info[$claim]['scope'];
+      if (isset($claims_info[$claim]) && !in_array($claims_info[$claim]['scope'], $scopes)) {
+        $scopes[] = $claims_info[$claim]['scope'];
       }
     }
     return implode(' ', $scopes);

@@ -680,6 +680,15 @@ class OpenIDConnect {
           }
         }
       }
+
+      // Map groups to Drupal roles.
+      $role_mappings = $this->configFactory->get('openid_connect.settings')
+        ->get('role_mappings');
+      foreach ($role_mappings as $role => $mappings) {
+        if (!empty(array_intersect($mappings, $userinfo['groups']))) {
+          $account->addRole($role);
+        }
+      }
     }
 
     // Save the display name additionally in the user account 'data', for
