@@ -176,11 +176,6 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
       if (isset($properties_skip[$property_name])) {
         continue;
       }
-      // Always map the timezone.
-      $default_value = '';
-      if ($property_name == 'timezone') {
-        $default_value = 'zoneinfo';
-      }
 
       $form['userinfo_mappings'][$property_name] = [
         '#type' => 'select',
@@ -189,7 +184,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
         '#options' => (array) $claims,
         '#empty_value' => '',
         '#empty_option' => $this->t('- No mapping -'),
-        '#default_value' => $mappings[$property_name] ?? $default_value,
+        '#default_value' => $mappings[$property_name] ?? '',
       ];
     }
 
