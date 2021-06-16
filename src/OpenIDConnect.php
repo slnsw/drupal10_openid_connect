@@ -255,8 +255,8 @@ class OpenIDConnect {
    */
   private function buildContext(OpenIDConnectClientEntityInterface $client, array $tokens) {
     $plugin = $client->getPlugin();
-    $user_data = is_string($tokens['id_token']) ? $this->parseToken($tokens['id_token']) : $tokens['id_token'];
-    $access_data = is_string($tokens['access_token']) ? $this->parseToken($tokens['access_token']) : $tokens['access_token'];
+    $user_data = isset($tokens['id_token']) ? (is_string($tokens['id_token']) ? $this->parseToken($tokens['id_token']) : $tokens['id_token']) : NULL;
+    $access_data = isset($tokens['access_token']) ? (is_string($tokens['access_token']) ? $this->parseToken($tokens['access_token']) : $tokens['access_token']) : NULL;
     if ($plugin->usesUserInfo()) {
       $userinfo = $plugin->retrieveUserInfo($tokens['access_token']);
     }
