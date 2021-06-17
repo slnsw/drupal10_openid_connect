@@ -217,32 +217,6 @@ class OpenIDConnect {
   }
 
   /**
-   * Get the 'sub' property from the user data and/or user claims.
-   *
-   * The 'sub' (Subject Identifier) is a unique ID for the external provider to
-   * identify the user.
-   *
-   * @param array|null $user_data
-   *   The user data.
-   * @param array|null $userinfo
-   *   The user claims.
-   *
-   * @return string|false
-   *   The sub, or FALSE if there was an error.
-   */
-  public function extractSub(?array $user_data, ?array $userinfo) {
-    if (isset($user_data) && isset($user_data['sub'])) {
-      // If we have sub in both $user_data and $userinfo, return FALSE if they
-      // differ. Otherwise return the one in $user_data.
-      return (!isset($userinfo['sub']) || ($user_data['sub'] == $userinfo['sub'])) ? $user_data['sub'] : FALSE;
-    }
-    else {
-      // No sub in $user_data, return from $userinfo if it exists.
-      return (isset($userinfo['sub'])) ? $userinfo['sub'] : FALSE;
-    }
-  }
-
-  /**
    * Fill the context array.
    *
    * @param \Drupal\openid_connect\OpenIDConnectClientEntityInterface $client
@@ -289,7 +263,16 @@ class OpenIDConnect {
       return FALSE;
     }
 
-    $sub = is_array($user_data) ? $this->extractSub($user_data, $userinfo) : FALSE;
+    if (isset($user_data) && isset($user_data['sub'])) {
+      // Set sub to FALSE, when it exists in both $user_data and $userinfo,
+      // and they differ.
+      $sub = (!isset($userinfo['sub']) || ($user_data['sub'] == $userinfo['sub'])) ? $user_data['sub'] : FALSE;
+    }
+    else {
+      // No sub in $user_data, set it from $userinfo if it exists.
+      $sub = (isset($userinfo['sub'])) ? $userinfo['sub'] : FALSE;
+    }
+
     if (empty($sub)) {
       $this->logger->error('No "sub" found from @provider', ['@provider' => $provider]);
       return FALSE;
@@ -435,8 +418,12 @@ class OpenIDConnect {
     }
 
     $this->externalAuth->userLoginFinalize($account, $context['sub'], 'openid_connect.' . $client->id());
-    $this->session->saveIdToken($tokens['id_token']);
-    $this->session->saveAccessToken($tokens['access_token']);
+    if (isset($tokens['id_token'])) {
+      $this->session->saveIdToken($tokens['id_token']);
+    }
+    if (isset($tokens['access_token'])) {
+      $this->session->saveAccessToken($tokens['access_token']);
+    }
 
     $this->moduleHandler
       ->invokeAll('openid_connect_post_authorize', [$account, $context]);
