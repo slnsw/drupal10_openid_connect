@@ -680,8 +680,10 @@ class OpenIDConnect {
           }
         }
       }
+    }
 
-      // Map groups to Drupal roles.
+    // Map groups to Drupal roles.
+    if (isset($userinfo['groups'])) {
       $role_mappings = $this->configFactory->get('openid_connect.settings')
         ->get('role_mappings');
       foreach ($role_mappings as $role => $mappings) {
