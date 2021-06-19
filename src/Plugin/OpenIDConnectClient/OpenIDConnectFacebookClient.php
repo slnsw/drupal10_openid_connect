@@ -34,7 +34,7 @@ class OpenIDConnectFacebookClient extends OpenIDConnectClientBase {
    * @var array
    */
   protected $fields = [
-    'id', 'name', 'email', 'first_name', 'last_name', 'gender', 'locale', 'timezone', 'picture',
+    'id', 'name', 'email', 'first_name', 'last_name', 'gender', 'locale', 'timezone', 'picture.height(500)',
   ];
 
   /**
