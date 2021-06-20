@@ -253,7 +253,7 @@ class OpenIDConnect {
     $this->moduleHandler->alter('openid_connect_userinfo', $userinfo, $context);
 
     // Whether we have no usable user information.
-    if (empty($user_data) && empty($userinfo)) {
+    if ((empty($user_data) || !is_array($user_data)) && empty($userinfo)) {
       $this->logger->error('No user information provided by @provider', ['@provider' => $provider]);
       return FALSE;
     }
@@ -288,22 +288,22 @@ class OpenIDConnect {
       'sub' => $sub,
       'account' => $account,
     ];
-    $results = $this->moduleHandler->invokeAll('openid_connect_pre_authorize', [
-      $account,
-      $context,
-    ]);
 
-    // Deny access if any module returns FALSE.
-    if (in_array(FALSE, $results, TRUE)) {
-      $this->logger->error('Login denied for @email via pre-authorize hook.', ['@email' => $userinfo['email']]);
-      return FALSE;
-    }
+    $results = $this->moduleHandler
+      ->invokeAll('openid_connect_pre_authorize', [$account, $context]);
+    if (is_array($results)) {
+      // Deny access if any module returns FALSE.
+      if (in_array(FALSE, $results, TRUE)) {
+        $this->logger->error('Login denied for @email via pre-authorize hook.', ['@email' => $userinfo['email']]);
+        return FALSE;
+      }
 
-    // If any module returns an account, set local $account to that.
-    foreach ($results as $result) {
-      if ($result instanceof UserInterface) {
-        $context['account'] = $result;
-        break;
+      // If any module returns an account, set local $account to that.
+      foreach ($results as $result) {
+        if ($result instanceof UserInterface) {
+          $context['account'] = $result;
+          break;
+        }
       }
     }
 
@@ -334,7 +334,7 @@ class OpenIDConnect {
     }
 
     $account = $context['account'];
-    if ($account !== FALSE) {
+    if ($account instanceof UserInterface) {
       // An existing account was found. Save user claims.
       if ($this->configFactory->get('openid_connect.settings')->get('always_save_userinfo')) {
         $this->saveUserinfo($account, $context + ['is_new' => FALSE]);
@@ -342,7 +342,7 @@ class OpenIDConnect {
     }
     else {
       // Check whether the e-mail address is valid.
-      $email = $context['userinfo']['email'];
+      $email = $context['userinfo']['email'] ?? '';
       if (!$this->emailValidator->isValid($email)) {
         $this->messenger->addError($this->t('The e-mail address is not valid: @email', [
           '@email' => $email,
@@ -357,26 +357,21 @@ class OpenIDConnect {
       if ($accounts) {
         /** @var \Drupal\user\UserInterface|bool $account */
         $account = reset($accounts);
-        $connect_existing_users = $this->configFactory->get('openid_connect.settings')
-          ->get('connect_existing_users');
+        $connect_existing_users = $this->configFactory->get('openid_connect.settings')->get('connect_existing_users');
         if ($connect_existing_users) {
           // Connect existing user account with this sub.
           $this->externalAuth->linkExistingAccount($context['sub'], 'openid_connect.' . $client->id(), $account);
         }
         else {
-          $this->messenger->addError($this->t('The e-mail address is already taken: @email', [
-            '@email' => $email,
-          ]));
+          $this->messenger->addError($this->t('The e-mail address is already taken: @email', ['@email' => $email]));
           return FALSE;
         }
       }
 
       // Check Drupal user register settings before saving.
-      $register = $this->configFactory->get('user.settings')
-        ->get('register');
+      $register = $this->configFactory->get('user.settings')->get('register');
       // Respect possible override from OpenID-Connect settings.
-      $register_override = $this->configFactory->get('openid_connect.settings')
-        ->get('override_registration_settings');
+      $register_override = $this->configFactory->get('openid_connect.settings')->get('override_registration_settings');
       if ($register === UserInterface::REGISTER_ADMINISTRATORS_ONLY && $register_override) {
         $register = UserInterface::REGISTER_VISITORS;
       }
@@ -455,25 +450,32 @@ class OpenIDConnect {
     }
 
     $account = $context['account'];
-    if ($account !== FALSE && $account->id() !== $this->currentUser->id()) {
-      $this->messenger->addError($this->t('Another user is already connected to this @provider account.', ['@provider' => $client->getPluginId()]));
+    if (($account instanceof UserInterface) && $account->id() !== $this->currentUser->id()) {
+      $this->messenger->addError($this->t('Another user is already connected to this @provider account.', ['@provider' => $client->id()]));
       return FALSE;
     }
 
-    if ($account === FALSE) {
+    if (!($account instanceof UserInterface)) {
+      /** @var \Drupal\user\UserInterface $account */
       $account = $this->userStorage->load($this->currentUser->id());
-      $this->externalAuth->linkExistingAccount($context['sub'], 'openid_connect.' . $client->id(), $account);
+      if ($account) {
+        $this->externalAuth->linkExistingAccount($context['sub'], 'openid_connect.' . $client->id(), $account);
+      }
     }
 
-    $always_save_userinfo = $this->configFactory->get('openid_connect.settings')->get('always_save_userinfo');
-    if ($always_save_userinfo) {
-      $this->saveUserinfo($account, $context);
+    if ($account) {
+      $always_save_userinfo = $this->configFactory->get('openid_connect.settings')->get('always_save_userinfo');
+      if ($always_save_userinfo) {
+        $this->saveUserinfo($account, $context);
+      }
+
+      $this->moduleHandler->invokeAll('openid_connect_post_authorize',
+        [$account, $context]);
+
+      return TRUE;
     }
 
-    $this->moduleHandler->invokeAll('openid_connect_post_authorize',
-      [$account, $context]);
-
-    return TRUE;
+    return FALSE;
   }
 
   /**
@@ -599,8 +601,7 @@ class OpenIDConnect {
         continue;
       }
 
-      $userinfo_mappings = $this->configFactory->get('openid_connect.settings')
-        ->get('userinfo_mappings');
+      $userinfo_mappings = $this->configFactory->get('openid_connect.settings')->get('userinfo_mappings');
       if (isset($userinfo_mappings[$property_name])) {
         $claim = $userinfo_mappings[$property_name];
 
@@ -671,8 +672,7 @@ class OpenIDConnect {
 
     // Map groups to Drupal roles.
     if (isset($userinfo['groups'])) {
-      $role_mappings = $this->configFactory->get('openid_connect.settings')
-        ->get('role_mappings');
+      $role_mappings = $this->configFactory->get('openid_connect.settings')->get('role_mappings');
       foreach ($role_mappings as $role => $mappings) {
         if (!empty(array_intersect($mappings, $userinfo['groups']))) {
           $account->addRole($role);
