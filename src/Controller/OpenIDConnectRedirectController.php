@@ -318,18 +318,18 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
               $response = new TrustedRedirectResponse($redirect->getGeneratedUrl());
               $response->addCacheableDependency($redirect);
             }
-          }
-          else {
-            if (!$end_session_enabled) {
-              $this->messenger()->addWarning($this->t('@provider does not support log out. You are logged out of this site but not out of the OpenID Connect provider.', ['@provider' => $entity->label()]));
+            else {
+              if (!$end_session_enabled) {
+                $this->messenger()->addWarning($this->t('@provider does not support log out. You are logged out of this site but not out of the OpenID Connect provider.', ['@provider' => $entity->label()]));
+              }
+              if ($redirect_logout_url) {
+                $url = $redirect_logout_url->toString(TRUE)->getGeneratedUrl();
+                $response = new TrustedRedirectResponse($url);
+                $response->addCacheableDependency($url);
+              }
             }
-            if ($redirect_logout_url) {
-              $url = $redirect_logout_url->toString(TRUE)->getGeneratedUrl();
-              $response = new TrustedRedirectResponse($url);
-              $response->addCacheableDependency($url);
-            }
+            $this->moduleHandler->alter('openid_connect_redirect_logout', $response, $client_name);
           }
-          $this->moduleHandler->alter('openid_connect_redirect_logout', $response, $client_name);
         }
       }
     }
