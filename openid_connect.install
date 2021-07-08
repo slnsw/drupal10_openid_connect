@@ -284,3 +284,18 @@ function openid_connect_update_8209() {
   $config->set('end_session_enabled', TRUE);
   $config->save(TRUE);
 }
+
+/**
+ * Update okta plugins with scopes.
+ */
+function openid_connect_update_8210() {
+  $clients = \Drupal::entityTypeManager()->getStorage('openid_connect_client')->loadByProperties(['plugin' => 'okta']);
+
+  foreach ($clients as $client) {
+    $config = $client->getPlugin()->getConfiguration();
+    if (empty($config['scopes'])) {
+      $client->getPlugin()->setConfiguration(['scopes' => ['openid', 'email']]);
+      $client->save();
+    }
+  }
+}
