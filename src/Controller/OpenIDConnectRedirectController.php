@@ -328,7 +328,9 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
                 $response->addCacheableDependency($url);
               }
             }
-            $this->moduleHandler->alter('openid_connect_redirect_logout', $response, $client_name);
+            $response = ['response' => $response];
+            $context = ['client' => $client_name];
+            $this->moduleHandler->alter('openid_connect_redirect_logout', $response, $context);
           }
         }
       }

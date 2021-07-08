@@ -10,7 +10,6 @@
 
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\user\UserInterface;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Modify the list of claims.
@@ -268,13 +267,16 @@ function hook_openid_connect_userinfo_save(UserInterface $account, array $contex
 /**
  * Alter the redirect response on logout.
  *
- * @param \Symfony\Component\HttpFoundation\RedirectResponse $response
- *   The response object to alter.
- * @param string $client
- *   The client ID.
+ * @param array $response
+ *   The response to alter and client ID.
+ * @param array $context
+ *   An associative array with context information:
+ *   - client:   The client identifier.
  */
-function hook_openid_connect_redirect_logout(RedirectResponse $response, string $client) {
-  if ($response instanceof TrustedRedirectResponse) {
-    $response->setTrustedTargetUrl($response->getTargetUrl() . '&client=' . $client);
+function hook_openid_connect_redirect_logout_alter(array &$response, array $context) {
+  if (isset($response['response']) && isset($context['client'])) {
+    if ($response['response'] instanceof TrustedRedirectResponse) {
+      $response['response']->setTrustedTargetUrl($response['response']->getTargetUrl() . '&client=' . $context['client']);
+    }
   }
 }
