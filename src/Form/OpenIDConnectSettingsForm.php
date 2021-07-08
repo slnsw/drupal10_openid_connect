@@ -197,15 +197,26 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
     $form['role_mappings'] = [
       '#title' => 'EXPERIMENTAL - ' . $this->t('User role mapping'),
       '#type' => 'fieldset',
-      '#description' => 'For each Drupal role, provide the sets of equivalent external groups. A user belonging to one of the provided groups will be assigned the configured Drupal role. Use client_id.group to limit a group to a specific client.',
+      '#description' => $this->t('For each Drupal role, provide the sets of equivalent external groups, separated by spaces. A user belonging to one of the provided groups will be assigned the configured Drupal role. Use client_id.group to limit a group to a specific client.'),
       '#tree' => TRUE,
     ];
 
     foreach ($roles as $role_id => $role) {
+      $default = '';
+      if (is_array($role_mappings[$role_id])) {
+        // Surround any mappings with spaces with double quotes.
+        foreach ($role_mappings[$role_id] as $key => $mapping) {
+          if (strpos($mapping, ' ') !== FALSE) {
+            $role_mappings[$role_id][$key] = '"' . $mapping . '"';
+          }
+        }
+        $default = implode(' ', $role_mappings[$role_id]);
+      }
+
       $form['role_mappings'][$role_id] = [
         '#title' => $role->label(),
         '#type' => 'textfield',
-        '#default_value' => implode(' ', $role_mappings[$role_id] ?? []),
+        '#default_value' => $default,
       ];
     }
 
@@ -220,7 +231,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
 
     $role_mappings = [];
     foreach ($form_state->getValue('role_mappings') as $role => $mapping) {
-      $role_mappings[$role] = array_values(array_filter(explode(' ', $mapping)));
+      $role_mappings[$role] = array_values(array_filter(str_getcsv($mapping, ' ')));
     }
 
     $this->config('openid_connect.settings')
