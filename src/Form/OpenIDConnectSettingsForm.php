@@ -238,6 +238,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
       ->set('always_save_userinfo', $form_state->getValue('always_save_userinfo'))
       ->set('connect_existing_users', $form_state->getValue('connect_existing_users'))
       ->set('override_registration_settings', $form_state->getValue('override_registration_settings'))
+      ->set('end_session_enabled', $form_state->getValue('end_session_enabled'))
       ->set('user_login_display', $form_state->getValue('user_login_display'))
       ->set('redirect_login', $form_state->getValue('redirect_login'))
       ->set('redirect_logout', $form_state->getValue('redirect_logout'))
