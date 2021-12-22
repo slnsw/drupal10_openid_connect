@@ -109,13 +109,6 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
       '#default_value' => $settings->get('always_save_userinfo'),
     ];
 
-    $form['connect_existing_users'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Automatically connect existing users'),
-      '#description' => $this->t('If disabled, authentication will fail for existing email addresses.'),
-      '#default_value' => $settings->get('connect_existing_users'),
-    ];
-
     $form['override_registration_settings'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Override registration settings'),
@@ -219,6 +212,18 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
         '#default_value' => $default,
       ];
     }
+
+    $form['advanced'] = [
+      '#title' => $this->t('Advanced'),
+      '#type' => 'details',
+      '#open' => $settings->get('connect_existing_users') ? TRUE : FALSE,
+    ];
+    $form['advanced']['connect_existing_users'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Automatically connect existing users'),
+      '#description' => $this->t('<strong><em>Please note:</em> This option has security implications, only use with trusted OpenID Connect providers.</strong><br />If disabled, authentication will fail for accounts with existing email addresses, users may connect existing accounts on their personal Connected Accounts page in a secure way.'),
+      '#default_value' => $settings->get('connect_existing_users'),
+    ];
 
     return parent::buildForm($form, $form_state);
   }
