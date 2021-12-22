@@ -318,6 +318,10 @@ class OpenIDConnectTest extends UnitTestCase {
         ->willReturn($hasPermission);
 
       if (!$hasPermission) {
+        $this->currentUser->expects($this->once())
+          ->method('id')
+          ->willReturn(3);
+
         $this->authmap->expects($this->once())
           ->method('getAll')
           ->willReturn($connectedAccounts);
@@ -330,6 +334,10 @@ class OpenIDConnectTest extends UnitTestCase {
         ->willReturn($hasPermission);
 
       if (!$hasPermission) {
+        $account->expects($this->once())
+          ->method('id')
+          ->willReturn(3);
+
         $this->authmap->expects($this->once())
           ->method('getAll')
           ->willReturn($connectedAccounts);
