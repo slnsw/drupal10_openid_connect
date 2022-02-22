@@ -190,7 +190,8 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
     $form['role_mappings'] = [
       '#title' => 'EXPERIMENTAL - ' . $this->t('User role mapping'),
       '#type' => 'fieldset',
-      '#description' => $this->t('For each Drupal role, provide the sets of equivalent external groups, separated by spaces. A user belonging to one of the provided groups will be assigned the configured Drupal role. Use client_id.group to limit a group to a specific client.'),
+      '#description' => $this->t('For each Drupal role, provide the sets of equivalent external groups, separated by spaces. A user belonging to one of the provided groups will be assigned the configured Drupal role.') .
+                        $this->t("<br/><strong>Note:</strong> The module will not update user roles with no mapped external groups. If all mappings to one of the roles are removd, users will keep that role until it is removed in the Drupal user administration."),
       '#tree' => TRUE,
     ];
 

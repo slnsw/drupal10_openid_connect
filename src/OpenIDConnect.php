@@ -675,7 +675,12 @@ class OpenIDConnect {
       $role_mappings = $this->configFactory->get('openid_connect.settings')->get('role_mappings');
       foreach ($role_mappings as $role => $mappings) {
         if (!empty(array_intersect($mappings, $userinfo['groups']))) {
+          // User has a mapped role. Add it to their account.
           $account->addRole($role);
+        }
+        else {
+          // User doesn't have a mapped role. Remove it from their account.
+          $account->removeRole($role);
         }
       }
     }
