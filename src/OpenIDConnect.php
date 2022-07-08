@@ -17,6 +17,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\externalauth\AuthmapInterface;
 use Drupal\externalauth\ExternalAuthInterface;
+use Drupal\file\FileRepositoryInterface;
 use Drupal\user\UserDataInterface;
 use Drupal\user\UserInterface;
 
@@ -118,6 +119,13 @@ class OpenIDConnect {
   protected $session;
 
   /**
+   * The file.repository service.
+   *
+   * @var \Drupal\file\FileRepositoryInterface
+   */
+  protected $fileRepository;
+
+  /**
    * Construct an instance of the OpenID Connect service.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -146,6 +154,8 @@ class OpenIDConnect {
    *   The file system service.
    * @param \Drupal\openid_connect\OpenIDConnectSessionInterface $session
    *   The OpenID Connect session service.
+   * @param \Drupal\file\FileRepositoryInterface $fileRepository
+   *   The file.repository service.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
@@ -163,7 +173,8 @@ class OpenIDConnect {
     ModuleHandlerInterface $module_handler,
     LoggerChannelFactoryInterface $logger,
     FileSystemInterface $fileSystem,
-    OpenIDConnectSessionInterface $session
+    OpenIDConnectSessionInterface $session,
+    FileRepositoryInterface $fileRepository
   ) {
     $this->configFactory = $config_factory;
     $this->authmap = $authmap;
@@ -178,6 +189,7 @@ class OpenIDConnect {
     $this->logger = $logger->get('openid_connect');
     $this->fileSystem = $fileSystem;
     $this->session = $session;
+    $this->fileRepository = $fileRepository;
   }
 
   /**
@@ -641,7 +653,12 @@ class OpenIDConnect {
                 $basename = explode('?', $this->fileSystem->basename($claim_value))[0];
                 $data = file_get_contents($claim_value);
 
-                $file = file_save_data($data, 'public://user-picture-' . $account->id() . '-' . $basename, FileSystemInterface::EXISTS_RENAME);
+                $file = $this->fileRepository->writeData(
+                  $data,
+                  "public://user-picture-{$account->id()}-{$basename}",
+                  FileSystemInterface::EXISTS_RENAME
+
+                );
 
                 // Cleanup the old file.
                 if ($file) {

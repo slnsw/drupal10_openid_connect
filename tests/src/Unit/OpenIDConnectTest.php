@@ -14,6 +14,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\externalauth\AuthmapInterface;
 use Drupal\externalauth\ExternalAuthInterface;
+use Drupal\file\FileRepositoryInterface;
 use Drupal\openid_connect\OpenIDConnectClientEntityInterface;
 use Drupal\openid_connect\OpenIDConnectSessionInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
@@ -154,6 +155,13 @@ class OpenIDConnectTest extends UnitTestCase {
   protected $session;
 
   /**
+   * Mock of the file.repository service.
+   *
+   * @var \PHPUnit\Framework\MockObject\MockObject
+   */
+  protected $fileRepository;
+
+  /**
    * {@inheritDoc}
    */
   protected function setUp(): void {
@@ -164,8 +172,6 @@ class OpenIDConnectTest extends UnitTestCase {
       ->method('id')
       ->willReturn(123);
 
-    // Add this mock to the globals for the file_save_data fixture.
-    $GLOBALS['oldFileMock'] = $oldFileMock;
 
     require_once 'UserPasswordFixture.php';
 
@@ -204,7 +210,7 @@ class OpenIDConnectTest extends UnitTestCase {
 
     $emailValidator = $this
       ->getMockBuilder('\Drupal\Component\Utility\EmailValidator')
-      ->setMethods(NULL);
+      ->addMethods([]);
     $this->emailValidator = $emailValidator->getMock();
 
     $this->messenger = $this
@@ -230,6 +236,8 @@ class OpenIDConnectTest extends UnitTestCase {
     $this->session = $this
       ->createMock(OpenIDConnectSessionInterface::class);
 
+    $this->fileRepository = $this->createMock(FileRepositoryInterface::class);
+
     $container = new ContainerBuilder();
     $container->set('string_translation', $this->getStringTranslationStub());
     $container->set('entity_type.repository', $this->createMock(EntityTypeRepositoryInterface::class));
@@ -249,7 +257,8 @@ class OpenIDConnectTest extends UnitTestCase {
       $this->moduleHandler,
       $this->logger,
       $this->fileSystem,
-      $this->session
+      $this->session,
+      $this->fileRepository
     );
   }
 
@@ -789,8 +798,9 @@ class OpenIDConnectTest extends UnitTestCase {
         $this->logger,
         $this->fileSystem,
         $this->session,
+        $this->fileRepository
       ])
-      ->setMethods([
+      ->onlyMethods([
         'userPropertiesIgnore',
         'createUser',
       ])
