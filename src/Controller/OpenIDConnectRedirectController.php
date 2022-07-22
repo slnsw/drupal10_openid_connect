@@ -17,11 +17,14 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\externalauth\AuthmapInterface;
+use Drupal\openid_connect\OpenIDConnectClaims;
 use Drupal\openid_connect\OpenIDConnect;
 use Drupal\openid_connect\OpenIDConnectClientEntityInterface;
 use Drupal\openid_connect\OpenIDConnectSessionInterface;
 use Drupal\openid_connect\OpenIDConnectStateTokenInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientInterface;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -109,6 +112,13 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
   protected $entityTypeManager;
 
   /**
+   * The OpenID Connect claims.
+   *
+   * @var \Drupal\openid_connect\OpenIDConnectClaims
+   */
+  protected $claims;
+
+  /**
    * The constructor.
    *
    * @param \Drupal\openid_connect\OpenIDConnect $openid_connect
@@ -131,8 +141,10 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
    *   The language manager service.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\openid_connect\OpenIDConnectClaims $claims
+   *   The OpenID claims service.
    */
-  public function __construct(OpenIDConnect $openid_connect, OpenIDConnectStateTokenInterface $state_token, RequestStack $request_stack, OpenIDConnectSessionInterface $session, ConfigFactoryInterface $config_factory, AuthmapInterface $authmap, AccountProxyInterface $current_user, ModuleHandlerInterface $module_handler, LanguageManagerInterface $language_manager, EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(OpenIDConnect $openid_connect, OpenIDConnectStateTokenInterface $state_token, RequestStack $request_stack, OpenIDConnectSessionInterface $session, ConfigFactoryInterface $config_factory, AuthmapInterface $authmap, AccountProxyInterface $current_user, ModuleHandlerInterface $module_handler, LanguageManagerInterface $language_manager, EntityTypeManagerInterface $entity_type_manager, OpenIDConnectClaims $claims) {
     $this->openIDConnect = $openid_connect;
     $this->stateToken = $state_token;
     $this->requestStack = $request_stack;
@@ -143,6 +155,7 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
     $this->moduleHandler = $module_handler;
     $this->languageManager = $language_manager;
     $this->entityTypeManager = $entity_type_manager;
+    $this->claims = $claims;
   }
 
   /**
@@ -159,8 +172,46 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
       $container->get('current_user'),
       $container->get('module_handler'),
       $container->get('language_manager'),
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('openid_connect.claims')
     );
+  }
+
+  /**
+   * Access callback: Initiate page.
+   *
+   * @param \Drupal\openid_connect\OpenIDConnectClientEntityInterface $openid_connect_client
+   *   The client.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   Whether the acting user is allowed to initiate the authorization.
+   */
+  public function accessInitiate(OpenIDConnectClientEntityInterface $openid_connect_client): AccessResultInterface {
+    // Only the anonymous user should be able to access redirects.
+    if ($this->currentUser->isAuthenticated()) {
+      return AccessResult::forbidden();
+    }
+
+    if (empty($openid_connect_client)) {
+      return AccessResult::forbidden();
+    }
+
+    $query = $this->requestStack->getCurrentRequest()->query;
+
+    // If the iss query parameter exists, the user is attempting SSO directly
+    // from the IDP.
+    $iss = $query->get('iss');
+    if (!empty($iss)) {
+      // If the iss domain is not in the allowed list, return forbidden.
+      if (!$this->isValidRedirect($openid_connect_client, $iss)) {
+        return AccessResult::forbidden();
+      }
+
+      return AccessResult::allowed();
+    }
+
+    // Default to forbidden.
+    return AccessResult::forbidden();
   }
 
   /**
@@ -170,7 +221,7 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
    *   Whether the state token matches the previously created one that is stored
    *   in the session.
    */
-  public function access(): AccessResultInterface {
+  public function accessAuthenticate(): AccessResultInterface {
     // Confirm anti-forgery state token. This round-trip verification helps to
     // ensure that the user, not a malicious script, is making the request.
     $request = $this->requestStack->getCurrentRequest();
@@ -178,6 +229,8 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
     if ($state_token && $this->stateToken->confirm($state_token)) {
       return AccessResult::allowed();
     }
+
+    // Default to forbidden.
     return AccessResult::forbidden();
   }
 
@@ -264,7 +317,7 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
     // The destination parameter should be a prepared uri and include any query
     // parameters or fragments already.
     //
-    // @see \Drupal\openid_connect\OpenIDConnectSession::saveDestination()
+    // @see \Drupal\openid_connect\OpenIDConnectSessionInterface::saveDestination()
     $session = $this->session->retrieveDestination();
     $destination = $session['destination'] ?: $this->configFactory->get('openid_connect.settings')->get('redirect_login');
     $langcode = $session['langcode'] ?: $this->languageManager->getCurrentLanguage()->getId();
@@ -272,6 +325,84 @@ class OpenIDConnectRedirectController implements ContainerInjectionInterface, Ac
 
     $redirect = Url::fromUri('internal:/' . ltrim($destination, '/'), ['language' => $language])->toString();
     return new RedirectResponse($redirect);
+  }
+
+  /**
+   * Initiate an SSO from the IDP.
+   *
+   * @param \Drupal\openid_connect\OpenIDConnectClientEntityInterface $openid_connect_client
+   *   The client.
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   *   A redirect response back to the IDP.
+   */
+  public function initiate(OpenIDConnectClientEntityInterface $openid_connect_client): Response {
+    if (empty($openid_connect_client)) {
+      throw new AccessDeniedHttpException();
+    }
+
+    // Handle the ISS query parameter.
+    $query = $this->requestStack->getCurrentRequest()->query;
+    $iss = $query->get('iss');
+
+    $additional_parameters = [];
+
+    // ISS is required.
+    if (empty($iss)) {
+      throw new AccessDeniedHttpException();
+    }
+
+    // If the iss domain is not in the allowed list, return access denied.
+    if (!$this->isValidRedirect($openid_connect_client, $iss)) {
+      throw new AccessDeniedHttpException();
+    }
+
+    // Handle the login_hint parameter.
+    $login_hint = $query->get('login_hint');
+    if (!empty($login_hint)) {
+      $additional_parameters['login_hint'] = $login_hint;
+    }
+
+    // Handle the target_link_uri parameter.
+    if (!empty($query->get('target_link_uri'))) {
+      $this->session->saveTargetLinkUri($query->get('target_link_uri'));
+    }
+
+    $scopes = $this->claims->getScopes();
+    return $openid_connect_client->getPlugin()->authorize($scopes, $additional_parameters);
+  }
+
+  /**
+   * Validate if the domain that initiated the SSO is valid.
+   *
+   * @param \Drupal\openid_connect\OpenIDConnectClientEntityInterface $client
+   *   The client that was requested.
+   * @param string $iss
+   *   The iss url parameter the requested SSO.
+   *
+   * @return bool
+   *   True if the domain is in the allowed list.
+   */
+  private function isValidRedirect(OpenIDConnectClientEntityInterface $client, string $iss): bool {
+    $settings = $client->get('settings');
+    if (empty($settings['iss_allowed_domains'])) {
+      return FALSE;
+    }
+
+    // Get the domains that are allowed.
+    $allowed_domains = explode("\r\n", $settings['iss_allowed_domains']);
+
+    $url = parse_url($iss);
+
+    if (empty($url['host'])) {
+      return FALSE;
+    }
+
+    if (in_array($url['host'], $allowed_domains)) {
+      return TRUE;
+    }
+
+    return FALSE;
   }
 
   /**

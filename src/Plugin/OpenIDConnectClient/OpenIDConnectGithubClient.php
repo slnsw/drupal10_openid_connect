@@ -64,7 +64,7 @@ class OpenIDConnectGithubClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function authorize(string $scope = 'openid email'): Response {
+  public function authorize(string $scope = 'openid email', array $additional_params = []): Response {
     // Use GitHub specific authorisations.
     return parent::authorize('user:email');
   }

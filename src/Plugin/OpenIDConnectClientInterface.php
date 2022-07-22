@@ -45,11 +45,14 @@ interface OpenIDConnectClientInterface extends ConfigurableInterface, DependentP
    * @param string $scope
    *   Name of scope(s) that with user consent will provide access to otherwise
    *   restricted user data. Defaults to "openid email".
+   * @param array $additional_params
+   *   Allow additional query parameters to be passed to the authorization url.
+   *   See: https://openid.net/specs/openid-connect-core-1_0.html#ThirdPartyInitiatedLogin.
    *
    * @return \Symfony\Component\HttpFoundation\Response
    *   A response object.
    */
-  public function authorize(string $scope = 'openid email'): Response;
+  public function authorize(string $scope = 'openid email', array $additional_params = []): Response;
 
   /**
    * Retrieve access token and ID token.

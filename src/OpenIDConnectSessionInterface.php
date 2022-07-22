@@ -30,6 +30,19 @@ interface OpenIDConnectSessionInterface extends ContainerInjectionInterface {
   public function saveDestination();
 
   /**
+   * Save a target_link_uri as the redirect destination in the session.
+   *
+   * This will convert the user provided string to a \Drupal\Core\Url object
+   * and will ensure it is not an external link before saving the destination
+   * parameter. The string passed _must_ begin with a '/'.
+   *
+   * @param string $target_link_uri
+   *   The internal url that the user should be redirected after login.
+   *   The string must begin with a '/'.
+   */
+  public function saveTargetLinkUri(string $target_link_uri): void;
+
+  /**
    * Get the operation details from the session.
    *
    * @param bool $clear

@@ -198,6 +198,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     return [
       'client_id' => '',
       'client_secret' => '',
+      'iss_allowed_domains' => '',
     ];
   }
 
@@ -238,6 +239,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       '#default_value' => $this->configuration['client_secret'],
       '#required' => TRUE,
     ];
+    $form['iss_allowed_domains'] = [
+      '#title' => $this->t('Allowed domains'),
+      '#description' => $this->t('Enter one domain per line that are allowed to initiate SSO using ISS.'),
+      '#type' => 'textarea',
+      '#default_value' => $this->configuration['iss_allowed_domains'],
+    ];
     return $form;
   }
 
@@ -265,9 +272,34 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   /**
    * {@inheritdoc}
    */
-  public function authorize(string $scope = 'openid email'): Response {
-    $redirect_uri = $this->getRedirectUrl()->toString(TRUE);
-    $url_options = $this->getUrlOptions($scope, $redirect_uri);
+  public function authorize(string $scope = 'openid email', array $additional_params = []): Response {
+    $language_none = \Drupal::languageManager()
+      ->getLanguage(LanguageInterface::LANGCODE_NOT_APPLICABLE);
+
+    $redirect_uri = Url::fromRoute(
+      'openid_connect.redirect_controller_redirect',
+      [
+        'openid_connect_client' => $this->parentEntityId,
+      ],
+      [
+        'absolute' => TRUE,
+        'language' => $language_none,
+      ]
+    )->toString(TRUE);
+
+    $url_options = [
+      'query' => [
+        'client_id' => $this->configuration['client_id'],
+        'response_type' => 'code',
+        'scope' => $scope,
+        'redirect_uri' => $redirect_uri->getGeneratedUrl(),
+        'state' => $this->stateToken->generateToken(),
+      ],
+    ];
+
+    if (!empty($additional_params)) {
+      $url_options['query'] = array_merge($url_options['query'], $additional_params);
+    }
 
     $endpoints = $this->getEndpoints();
     // Clear _GET['destination'] because we need to override it.

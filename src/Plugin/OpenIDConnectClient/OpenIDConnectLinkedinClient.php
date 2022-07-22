@@ -48,7 +48,7 @@ class OpenIDConnectLinkedinClient extends OpenIDConnectClientBase {
   /**
    * {@inheritdoc}
    */
-  public function authorize(string $scope = 'openid email'): Response {
+  public function authorize(string $scope = 'openid email', array $additional_params = []): Response {
     // Use LinkedIn specific authorisations.
     return parent::authorize('r_liteprofile r_emailaddress');
   }

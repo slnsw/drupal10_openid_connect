@@ -109,6 +109,25 @@ class OpenIDConnectSession implements OpenIDConnectSessionInterface {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  public function saveTargetLinkUri(string $target_link_uri): void {
+    try {
+      $uri = Url::fromUserInput($target_link_uri);
+    }
+    catch (\InvalidArgumentException $e) {
+      // Invalid url, return.
+      return;
+    }
+
+    // Make sure the uri is not external.
+    if (!$uri->isExternal()) {
+      // Save the path if it is safe.
+      $this->session->set('openid_connect_destination', ltrim($target_link_uri, '/'));
+    }
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function retrieveOp(bool $clear = TRUE): array {
