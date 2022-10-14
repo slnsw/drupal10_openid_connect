@@ -187,6 +187,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
     unset($roles['authenticated']);
     $role_mappings = $settings->get('role_mappings');
 
+    // phpcs:disable Drupal.Arrays.Array.ArrayIndentation
     $form['role_mappings'] = [
       '#title' => 'EXPERIMENTAL - ' . $this->t('User role mapping'),
       '#type' => 'fieldset',
@@ -194,6 +195,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
                         $this->t("<br/><strong>Note:</strong> The module will not update user roles with no mapped external groups. If all mappings to one of the roles are removd, users will keep that role until it is removed in the Drupal user administration."),
       '#tree' => TRUE,
     ];
+    // phpcs:enable
 
     foreach ($roles as $role_id => $role) {
       $default = '';

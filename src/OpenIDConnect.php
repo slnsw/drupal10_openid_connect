@@ -733,7 +733,7 @@ class OpenIDConnect {
   protected function parseToken(string $token) {
     $parts = explode('.', $token, 3);
     if (count($parts) === 3) {
-      $decoded = Json::decode(base64_decode(str_replace(['-','_'], ['+','/'], $parts[1])));
+      $decoded = Json::decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $parts[1])));
       if (is_array($decoded)) {
         return $decoded;
       }
