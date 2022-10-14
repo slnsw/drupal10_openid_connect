@@ -172,7 +172,6 @@ class OpenIDConnectTest extends UnitTestCase {
       ->method('id')
       ->willReturn(123);
 
-
     require_once 'UserPasswordFixture.php';
 
     // Mock the config_factory service.
@@ -798,7 +797,7 @@ class OpenIDConnectTest extends UnitTestCase {
         $this->logger,
         $this->fileSystem,
         $this->session,
-        $this->fileRepository
+        $this->fileRepository,
       ])
       ->onlyMethods([
         'userPropertiesIgnore',

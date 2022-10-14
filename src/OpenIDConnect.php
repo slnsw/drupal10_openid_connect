@@ -657,7 +657,6 @@ class OpenIDConnect {
                   $data,
                   "public://user-picture-{$account->id()}-{$basename}",
                   FileSystemInterface::EXISTS_RENAME
-
                 );
 
                 // Cleanup the old file.

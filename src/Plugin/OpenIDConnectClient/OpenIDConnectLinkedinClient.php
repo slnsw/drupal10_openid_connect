@@ -61,9 +61,9 @@ class OpenIDConnectLinkedinClient extends OpenIDConnectClientBase {
     $info = parent::retrieveUserInfo($access_token);
 
     if ($info) {
-      $userinfo['sub'] = isset($info['id']) ? $info['id'] : '';
-      $userinfo['first_name'] = isset($info['localizedFirstName']) ? $info['localizedFirstName'] : '';
-      $userinfo['last_name'] = isset($info['localizedLastName']) ? $info['localizedLastName'] : '';
+      $userinfo['sub'] = $info['id'] ?? '';
+      $userinfo['first_name'] = $info['localizedFirstName'] ?? '';
+      $userinfo['last_name'] = $info['localizedLastName'] ?? '';
       $userinfo['name'] = $userinfo['first_name'] . ' ' . $userinfo['last_name'];
 
       if (isset($info['profilePicture']['displayImage~']['elements'])) {

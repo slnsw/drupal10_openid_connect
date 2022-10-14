@@ -129,7 +129,7 @@ class OpenIDConnectClientEntity extends ConfigEntityBase implements OpenIDConnec
    * Encapsulates creation of the OpenID Connect client's LazyPluginCollection.
    *
    * @return \Drupal\openid_connect\Plugin\OpenIDConnectClientCollection
-   *   The OpenID Connect cqlient plugin collection.
+   *   The OpenID Connect client plugin collection.
    */
   protected function getPluginCollection(): OpenIDConnectClientCollection {
     if (!$this->pluginCollection) {

@@ -173,7 +173,7 @@ class OpenIDConnectAccountsForm extends FormBase {
       return;
     }
 
-    list($op, $client_name) = explode('__', $form_state->getTriggeringElement()['#name'], 2);
+    [$op, $client_name] = explode('__', $form_state->getTriggeringElement()['#name'], 2);
     /** @var \Drupal\openid_connect\OpenIDConnectClientEntityInterface $client */
     $client = $this->entityTypeManager->getStorage('openid_connect_client')->loadByProperties(['id' => $client_name])[$client_name];
 
