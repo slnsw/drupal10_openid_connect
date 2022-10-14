@@ -2,20 +2,20 @@ services:
   openid_connect.openid_connect:
     class: Drupal\openid_connect\OpenIDConnect
     arguments:
-    - '@config.factory'
-    - '@externalauth.authmap'
-    - '@externalauth.externalauth'
-    - '@entity_type.manager'
-    - '@entity_field.manager'
-    - '@current_user'
-    - '@user.data'
-    - '@email.validator'
-    - '@messenger'
-    - '@module_handler'
-    - '@logger.factory'
-    - '@file_system'
-    - '@openid_connect.session'
-    - '@file.repository'
+      - '@config.factory'
+      - '@externalauth.authmap'
+      - '@externalauth.externalauth'
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+      - '@current_user'
+      - '@user.data'
+      - '@email.validator'
+      - '@messenger'
+      - '@module_handler'
+      - '@logger.factory'
+      - '@file_system'
+      - '@openid_connect.session'
+      - '@file.repository'
 
   plugin.manager.openid_connect_client:
     class: Drupal\openid_connect\Plugin\OpenIDConnectClientManager
