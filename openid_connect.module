@@ -88,7 +88,7 @@ function openid_connect_form_user_form_alter(&$form, &$form_state) {
     return;
   }
 
-  $account_form = isset($form['account']) ? (&$form['account']) : (&$form);
+  $account_form = $form['account'] ?? $form;
 
   $account_form['current_pass']['#access'] = FALSE;
   $account_form['current_pass_required_values']['#value'] = [];
@@ -100,7 +100,7 @@ function openid_connect_form_user_form_alter(&$form, &$form_state) {
  * Implements hook_form_FORM_ID_alter() for user_profile_form.
  */
 function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
-  $account_form = isset($form['account']) ? (&$form['account']) : (&$form);
+  $account_form = $form['account'] ?? $form;
 
   $account = \Drupal::currentUser();
   if (!empty($account_form['pass']['#access']) && !\Drupal::service('openid_connect.openid_connect')->hasSetPasswordAccess($account)) {
