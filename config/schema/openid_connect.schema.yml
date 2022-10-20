@@ -62,6 +62,9 @@ openid_connect.client.plugin.*:
     client_secret:
       type: string
       label: 'Client secret'
+    iss_allowed_domains:
+      type: string
+      label: 'Domains that are allowed to initiate SSO using ISS'
 
 openid_connect.client.plugin.facebook:
   type: mapping
