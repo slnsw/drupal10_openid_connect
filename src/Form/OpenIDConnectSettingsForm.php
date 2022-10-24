@@ -219,7 +219,7 @@ class OpenIDConnectSettingsForm extends ConfigFormBase {
     $form['advanced'] = [
       '#title' => $this->t('Advanced'),
       '#type' => 'details',
-      '#open' => $settings->get('connect_existing_users') ? TRUE : FALSE,
+      '#open' => $settings->get('connect_existing_users'),
     ];
     $form['advanced']['connect_existing_users'] = [
       '#type' => 'checkbox',
