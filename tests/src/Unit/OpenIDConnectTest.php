@@ -204,7 +204,7 @@ class OpenIDConnectTest extends UnitTestCase {
 
     $emailValidator = $this
       ->getMockBuilder('\Drupal\Component\Utility\EmailValidator')
-      ->setMethods(NULL);
+      ->onlyMethods(NULL);
     $this->emailValidator = $emailValidator->getMock();
 
     $this->messenger = $this
@@ -790,7 +790,7 @@ class OpenIDConnectTest extends UnitTestCase {
         $this->fileSystem,
         $this->session,
       ])
-      ->setMethods([
+      ->onlyMethods([
         'userPropertiesIgnore',
         'createUser',
       ])
